@@ -1,5 +1,6 @@
 import { GradientMesh } from "@/components/ui/gradient-mesh"
 import { login, signup } from "./actions"
+import Link from "next/link"
 
 export default async function LoginPage({
     searchParams,
@@ -72,12 +73,12 @@ export default async function LoginPage({
                         >
                             Sign in
                         </button>
-                        <button
-                            formAction={signup}
-                            className="flex w-full justify-center rounded-lg border border-white/20 bg-transparent px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                        <Link
+                            href="/register"
+                            className="flex w-full items-center justify-center rounded-lg border border-white/20 bg-transparent px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                         >
                             Sign up
-                        </button>
+                        </Link>
                     </div>
                 </form>
 

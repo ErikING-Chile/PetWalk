@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 
 export const GradientMesh = ({ className }: { className?: string }) => {
     return (
-        <div className={cn("absolute inset-0 z-0 overflow-hidden bg-background", className)}>
+        <div className={cn("absolute inset-0 z-0 overflow-hidden bg-background pointer-events-none", className)}>
             <motion.div
                 animate={{
                     scale: [1, 1.2, 1],

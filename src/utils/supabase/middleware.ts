@@ -57,26 +57,38 @@ export async function updateSession(request: NextRequest) {
         }
     }
 
-    // 3. Role-Based Redirection
+    // 3. Role-Based Redirection & Protection
     if (user) {
-        // Check if we are on the root path or generic dashboard, we might want to redirect to the specific role dashboard
-        if (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/dashboard') {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', user.id)
-                .single()
+        // Fetch profile to know the role
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
 
-            if (profile?.role) {
-                const role = profile.role
+        if (profile?.role) {
+            const role = profile.role
+
+            // A. Root Redirection
+            if (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/dashboard') {
                 const targetPath = role === 'admin' ? '/admin' : role === 'walker' ? '/walker' : '/client'
+                const url = request.nextUrl.clone()
+                url.pathname = targetPath
+                return NextResponse.redirect(url)
+            }
 
-                // Only redirect if we are NOT already there
-                if (!request.nextUrl.pathname.startsWith(targetPath)) {
-                    const url = request.nextUrl.clone()
-                    url.pathname = targetPath
-                    return NextResponse.redirect(url)
-                }
+            // B. Route Protection (Boundary Enforcement)
+            // Prevent Walkers from Client areas
+            if (role === 'walker' && request.nextUrl.pathname.startsWith('/client')) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/walker'
+                return NextResponse.redirect(url)
+            }
+            // Prevent Clients from Walker areas
+            if (role === 'client' && request.nextUrl.pathname.startsWith('/walker')) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/client'
+                return NextResponse.redirect(url)
             }
         }
     }

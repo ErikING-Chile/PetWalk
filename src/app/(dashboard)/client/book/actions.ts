@@ -13,6 +13,8 @@ export async function getWalkers() {
         .select(`
             user_id,
             rating_avg,
+            description,
+            birth_date,
             profiles (
                 full_name,
                 avatar_url

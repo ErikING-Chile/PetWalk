@@ -1,7 +1,9 @@
 import { Card } from "@/components/ui/card"
-import { Dog, MapPin, Clock } from "lucide-react"
+import { Dog, MapPin, Clock, Calendar, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/server"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 
 export default async function ClientDashboard() {
     const supabase = await createClient()
@@ -11,8 +13,53 @@ export default async function ClientDashboard() {
     const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user?.id).single()
     const name = profile?.full_name?.split(' ')[0] || "Dueño"
 
+    // Fetch Next Walk (Active: Requested, Assigned, In Progress)
+    const { data: nextWalk, error: nextWalkError } = await supabase
+        .from('walk_bookings')
+        .select(`
+            *,
+            walker:profiles!walker_id(
+                full_name
+            ),
+            pet:pets(name, photo_url)
+        `)
+        .eq('client_id', user?.id)
+        .in('status', ['requested', 'assigned', 'in_progress'])
+        .order('scheduled_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+    if (nextWalkError) console.error("NextWalk Error:", nextWalkError)
+
+    // Fetch History (Completed, Cancelled)
+    const { data: history, error: historyError } = await supabase
+        .from('walk_bookings')
+        .select(`
+            *,
+            walker:profiles!walker_id(
+                full_name
+            ),
+            pet:pets(name)
+        `)
+        .eq('client_id', user?.id)
+        .in('status', ['completed', 'cancelled'])
+        .order('scheduled_at', { ascending: false })
+        .limit(5)
+
+    if (historyError) console.error("History Error:", historyError)
+
+
+    // Calculate Stats
+    const { count: totalWalks } = await supabase
+        .from('walk_bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('client_id', user?.id)
+        .eq('status', 'completed')
+
+    const totalKm = (totalWalks || 0) * 2.5 // Mock: 2.5km per walk average
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20">
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
@@ -22,8 +69,9 @@ export default async function ClientDashboard() {
                     <p className="text-sm text-gray-400">¿Listo para el paseo de hoy?</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-white/10 overflow-hidden border border-white/20">
-                    {/* Avatar placeholder */}
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500" />
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                        {name[0]}
+                    </div>
                 </div>
             </div>
 
@@ -43,30 +91,112 @@ export default async function ClientDashboard() {
                 </Card>
             </Link>
 
+            {/* DEBUG SECTION REMOVED */}
+
             {/* Active/Next Walk Section */}
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white">Próximo Paseo</h3>
-                <Card variant="glass" className="space-y-4">
-                    <div className="flex items-center gap-3">
-                        <div className="bg-green-500/20 p-2 rounded-lg text-green-400">
-                            <Clock size={16} />
+                {nextWalk ? (
+                    <Card variant="glass" className="space-y-4 border-l-4 border-l-purple-500">
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 rounded-xl bg-purple-500/20 flex items-center justify-center overflow-hidden">
+                                    {/* @ts-ignore */}
+                                    {nextWalk.pet?.image_url ? (
+                                        // @ts-ignore
+                                        <img src={nextWalk.pet.image_url} alt="Pet" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Dog size={24} className="text-purple-400" />
+                                    )}
+                                </div>
+                                <div>
+                                    {/* @ts-ignore */}
+                                    <h4 className="font-bold text-white">{nextWalk.pet?.name || 'Mascota'}</h4>
+                                    <div className="flex items-center text-xs text-purple-300 gap-1">
+                                        {/* @ts-ignore */}
+                                        <span>Con {nextWalk.walker?.profiles?.full_name || 'Un Paseador'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span className="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold capitalize border border-yellow-500/20">
+                                {nextWalk.status === 'requested' ? 'Pendiente' : nextWalk.status}
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                            <div className="flex items-center gap-2 text-gray-400 text-xs">
+                                <Calendar size={14} className="text-purple-400" />
+                                <span>{format(new Date(nextWalk.scheduled_at), "d 'de' MMMM", { locale: es })}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-400 text-xs">
+                                <Clock size={14} className="text-purple-400" />
+                                <span>{format(new Date(nextWalk.scheduled_at), "HH:mm")} ({nextWalk.duration_minutes} min)</span>
+                            </div>
+                        </div>
+                    </Card>
+                ) : (
+                    <Card variant="glass" className="py-8 flex flex-col items-center justify-center text-center space-y-2 opacity-70">
+                        <div className="bg-white/5 p-3 rounded-full">
+                            <Clock size={20} className="text-gray-400" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-white">Sin paseos agendados</p>
-                            <p className="text-xs text-gray-500">Agenda uno arriba 👆</p>
+                            <p className="text-sm font-medium text-gray-300">Sin paseos agendados</p>
+                            <p className="text-xs text-gray-500">¡Tu mascota te lo agradecerá!</p>
                         </div>
-                    </div>
-                </Card>
+                    </Card>
+                )}
             </div>
 
-            {/* Recent Activity / Stats */}
+            {/* Recent Activity */}
+            <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                    <h3 className="text-lg font-semibold text-white">Actividad Reciente</h3>
+                    <span className="text-xs text-purple-400">Ver todo</span>
+                </div>
+
+                <div className="space-y-3">
+                    {history && history.length > 0 ? (
+                        history.map((walk: any) => (
+                            <div key={walk.id} className="relative group">
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-pink-600/10 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative bg-white/5 border border-white/10 p-3 rounded-xl flex items-center justify-between hover:bg-white/10 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${walk.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-gray-700/50 text-gray-400'
+                                            }`}>
+                                            <Dog size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-white capitalize">
+                                                Paseo de {walk.pet?.name}
+                                            </p>
+                                            <p className="text-xs text-gray-400">
+                                                {format(new Date(walk.scheduled_at), "d MMM, HH:mm", { locale: es })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-bold text-white">${walk.price}</p>
+                                        <p className="text-[10px] uppercase tracking-wider text-gray-500">{walk.status}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-4 text-xs text-gray-500">
+                            No hay historial aún.
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-4">
                 <Card variant="glass" className="p-4 flex flex-col items-center justify-center space-y-2">
-                    <span className="text-3xl font-bold text-purple-400">0</span>
+                    <span className="text-3xl font-bold text-purple-400">{totalWalks || 0}</span>
                     <span className="text-xs text-gray-400">Paseos Totales</span>
                 </Card>
                 <Card variant="glass" className="p-4 flex flex-col items-center justify-center space-y-2">
-                    <span className="text-3xl font-bold text-pink-400">0.0</span>
+                    <span className="text-3xl font-bold text-pink-400">{totalKm}</span>
                     <span className="text-xs text-gray-400">Km Recorridos</span>
                 </Card>
             </div>

@@ -27,14 +27,29 @@ export default async function PetsPage() {
             <div className="grid gap-4">
                 {pets && pets.length > 0 ? (
                     pets.map((pet) => (
-                        <Card key={pet.id} variant="glass" className="flex items-center gap-4">
-                            <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-purple-500/20 to-pink-500/20 flex items-center justify-center border border-white/10">
-                                {pet.species === 'cat' ? <Cat className="text-pink-400" /> : <Dog className="text-purple-400" />}
+                        <Card key={pet.id} variant="glass" className="flex items-center gap-4 p-3 hover:bg-white/5 transition-colors">
+                            <div className="h-16 w-16 rounded-full bg-white/5 flex-shrink-0 border border-white/10 overflow-hidden relative">
+                                {pet.photo_url ? (
+                                    <img src={pet.photo_url} alt={pet.name} className="h-full w-full object-cover" />
+                                ) : (
+                                    <div className="h-full w-full flex items-center justify-center bg-gradient-to-tr from-purple-500/20 to-pink-500/20">
+                                        {pet.species === 'cat' ? <Cat className="text-pink-400" /> : <Dog className="text-purple-400" />}
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-white text-lg">{pet.name}</h3>
-                                <p className="text-sm text-gray-400">
-                                    {pet.breed || 'Sin raza'} • {pet.size === 's' ? 'Pequeño' : pet.size === 'm' ? 'Mediano' : 'Grande'}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start">
+                                    <h3 className="font-bold text-white text-lg truncate flex items-center gap-2">
+                                        {pet.name}
+                                        {pet.gender === 'female' && <span className="text-pink-400 text-xs">♀</span>}
+                                        {pet.gender === 'male' && <span className="text-blue-400 text-xs">♂</span>}
+                                    </h3>
+                                </div>
+                                <p className="text-sm text-gray-400 truncate">
+                                    {pet.species === 'dog' ? 'Perro' : 'Gato'} • {pet.breed || 'Sin raza'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                    {pet.size === 's' ? 'Pequeño' : pet.size === 'm' ? 'Mediano' : 'Grande'}
                                 </p>
                             </div>
                         </Card>

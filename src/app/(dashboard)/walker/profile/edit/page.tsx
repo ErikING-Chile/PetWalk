@@ -3,11 +3,13 @@
 import { Card } from "@/components/ui/card"
 import { updateWalkerProfile } from "@/app/(dashboard)/walker/actions"
 import { Upload, Check, AlertCircle } from "lucide-react"
+import { validateRun, formatRun, validatePhone } from "@/utils/validation"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
 export default function EditWalkerProfilePage() {
     const [isLoading, setIsLoading] = useState(false)
+    const [errors, setErrors] = useState<{ run?: string, phone?: string }>({})
     const router = useRouter()
 
     const handleSubmit = async (formData: FormData) => {
@@ -18,7 +20,7 @@ export default function EditWalkerProfilePage() {
         if (result?.success) {
             router.push('/walker/profile')
         } else {
-            alert('Error al actualizar perfil')
+            alert(result?.error || 'Error al actualizar perfil')
         }
     }
 
@@ -62,19 +64,20 @@ export default function EditWalkerProfilePage() {
                                     placeholder="12.345.678-K"
                                     required
                                     onChange={(e) => {
-                                        let val = e.target.value.replace(/[^0-9kK]/g, '')
-                                        if (val.length > 1) {
-                                            val = val.slice(0, -1) + '-' + val.slice(-1)
-                                        }
-                                        if (val.length > 5) {
-                                            const parts = val.split('-')
-                                            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-                                            val = parts.join('-')
-                                        }
+                                        const val = formatRun(e.target.value)
                                         e.target.value = val
+                                        if (val && !validateRun(val)) {
+                                            setErrors(prev => ({ ...prev, run: "RUN inválido (Revisa el dígito verificador)" }))
+                                        } else {
+                                            setErrors(prev => {
+                                                const { run, ...rest } = prev
+                                                return rest
+                                            })
+                                        }
                                     }}
                                 />
                                 <p className="text-[10px] text-gray-500">Formato: 12.345.678-K</p>
+                                {errors.run && <p className="text-red-400 text-xs">{errors.run}</p>}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm text-gray-300">Teléfono</label>
@@ -85,12 +88,20 @@ export default function EditWalkerProfilePage() {
                                     required
                                     defaultValue="+56 9 "
                                     onChange={(e) => {
-                                        // Simple prefix enforcement
                                         if (!e.target.value.startsWith('+56 9 ')) {
                                             e.target.value = '+56 9 '
                                         }
+                                        if (!validatePhone(e.target.value)) {
+                                            setErrors(prev => ({ ...prev, phone: "Formato inválido (Debe ser +56 9 ... y 8 dígitos)" }))
+                                        } else {
+                                            setErrors(prev => {
+                                                const { phone, ...rest } = prev
+                                                return rest
+                                            })
+                                        }
                                     }}
                                 />
+                                {errors.phone && <p className="text-red-400 text-xs">{errors.phone}</p>}
                             </div>
                         </div>
 
@@ -136,8 +147,8 @@ export default function EditWalkerProfilePage() {
                 </section>
 
                 <button
-                    disabled={isLoading}
-                    className="btn-primary w-full shadow-xl shadow-purple-900/20 flex items-center justify-center gap-2 text-lg py-4"
+                    disabled={isLoading || Object.keys(errors).length > 0}
+                    className="btn-primary w-full shadow-xl shadow-purple-900/20 flex items-center justify-center gap-2 text-lg py-4 disabled:opacity-50"
                 >
                     {isLoading ? "Enviando..." : "Enviar para Verificación"}
                 </button>

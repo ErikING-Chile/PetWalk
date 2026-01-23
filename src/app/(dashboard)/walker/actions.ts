@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { validateRun, validatePhone, formatRun } from '@/utils/validation'
 
 export async function getWalkerRequests() {
     const supabase = await createClient()
@@ -44,9 +45,82 @@ export async function startWalk(bookingId: string) {
     revalidatePath('/walker')
 }
 
+export async function verifyAndStartWalk(bookingId: string, code: string) {
+    const supabase = await createClient()
+
+    // 1. Check code
+    const { data: booking, error } = await supabase
+        .from('walk_bookings')
+        .select('start_code')
+        .eq('id', bookingId)
+        .single()
+
+    if (error || !booking) {
+        return { error: "Booking not found" }
+    }
+
+    if (booking.start_code !== code) {
+        return { error: "Código incorrecto. Verifica con el dueño." }
+    }
+
+    // 2. Start Walk
+    await supabase
+        .from('walk_bookings')
+        .update({ status: 'in_progress' })
+        .eq('id', bookingId)
+
+    revalidatePath('/walker')
+    return { success: true }
+}
+
+// Helper for Haversine Distance (km)
+function calculateDistance(points: { lat: number; lng: number }[]) {
+    let total = 0;
+    for (let i = 1; i < points.length; i++) {
+        const R = 6371; // km
+        const dLat = (points[i].lat - points[i - 1].lat) * Math.PI / 180;
+        const dLon = (points[i].lng - points[i - 1].lng) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(points[i - 1].lat * Math.PI / 180) * Math.cos(points[i].lat * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        total += R * c;
+    }
+    return total;
+}
+
 export async function completeWalk(bookingId: string) {
     const supabase = await createClient()
-    await supabase.from('walk_bookings').update({ status: 'completed' }).eq('id', bookingId)
+
+    // 1. Fetch GPS Route to calculate stats
+    const { data: routes } = await supabase
+        .from('walk_routes')
+        .select('lat, lng, created_at')
+        .eq('booking_id', bookingId)
+        .order('created_at', { ascending: true })
+
+    let distance = 0
+    let duration = 0
+
+    if (routes && routes.length > 1) {
+        // Calculate Distance
+        distance = calculateDistance(routes)
+
+        // Calculate Duration (End - Start)
+        const start = new Date(routes[0].created_at).getTime()
+        const end = new Date(routes[routes.length - 1].created_at).getTime()
+        duration = Math.round((end - start) / 1000 / 60) // minutes
+    }
+
+    // 2. Update Booking
+    await supabase.from('walk_bookings')
+        .update({
+            status: 'completed',
+            actual_distance_km: parseFloat(distance.toFixed(2)),
+            actual_duration_min: duration
+        })
+        .eq('id', bookingId)
+
     revalidatePath('/walker')
 }
 
@@ -70,8 +144,16 @@ export async function updateWalkerProfile(formData: FormData) {
     const certBackground = formData.get('certificate_background') as File
     const certResidence = formData.get('certificate_residence') as File
 
+    // Validate fields
+    if (run && !validateRun(run)) {
+        return { error: "RUN inválido. Revisa el dígito verificador." }
+    }
+    if (phone && !validatePhone(phone)) {
+        return { error: "Teléfono inválido. Formato: +56 9 1234 5678" }
+    }
+
     const updates: any = {
-        run,
+        run: formatRun(run),
         phone,
         address,
         description,

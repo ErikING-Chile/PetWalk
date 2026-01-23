@@ -21,7 +21,8 @@ export default async function ClientDashboard() {
             walker:profiles!walker_id(
                 full_name
             ),
-            pet:pets(name, photo_url)
+            pet:pets(name, photo_url),
+            start_code
         `)
         .eq('client_id', user?.id)
         .in('status', ['requested', 'assigned', 'in_progress'])
@@ -106,7 +107,13 @@ export default async function ClientDashboard() {
                                         // @ts-ignore
                                         <img src={nextWalk.pet.image_url} alt="Pet" className="w-full h-full object-cover" />
                                     ) : (
-                                        <Dog size={24} className="text-purple-400" />
+                                        // @ts-ignore
+                                        nextWalk.pet?.photo_url ? (
+                                            // @ts-ignore
+                                            <img src={nextWalk.pet.photo_url} alt="Pet" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <Dog size={24} className="text-purple-400" />
+                                        )
                                     )}
                                 </div>
                                 <div>
@@ -118,10 +125,41 @@ export default async function ClientDashboard() {
                                     </div>
                                 </div>
                             </div>
-                            <span className="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-bold capitalize border border-yellow-500/20">
-                                {nextWalk.status === 'requested' ? 'Pendiente' : nextWalk.status}
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize border ${nextWalk.status === 'assigned' ? 'bg-blue-500/20 text-blue-400 border-blue-500/20' :
+                                nextWalk.status === 'in_progress' ? 'bg-green-500/20 text-green-400 border-green-500/20' :
+                                    'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
+                                }`}>
+                                {nextWalk.status === 'requested' ? 'Buscando...' :
+                                    nextWalk.status === 'assigned' ? 'Paseador Asignado' :
+                                        nextWalk.status === 'in_progress' ? 'En Curso' : nextWalk.status}
                             </span>
                         </div>
+
+                        {/* Secure Start Code Display */}
+                        {/* @ts-ignore */}
+                        {nextWalk.start_code && nextWalk.status !== 'in_progress' && (
+                            <div className="mt-4 p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 flex flex-col items-center justify-center text-center animate-pulse">
+                                <p className="text-xs text-blue-300 font-bold uppercase tracking-widest mb-2">
+                                    {nextWalk.status === 'assigned' ? '¡Tu paseador viene en camino!' : 'Código de Inicio'}
+                                </p>
+                                <p className="text-[10px] text-gray-400 mb-1">Entrégale este código para comenzar:</p>
+                                {/* @ts-ignore */}
+                                <p className="text-4xl font-mono font-bold text-white tracking-[0.2em] drop-shadow-lg">{nextWalk.start_code}</p>
+                            </div>
+                        )}
+
+                        {/* Live Tracking / Chat Button */}
+                        {(nextWalk.status === 'in_progress' || nextWalk.status === 'assigned') && (
+                            <Link href={`/client/track/${nextWalk.id}`} className="mt-4 block">
+                                <div className={`w-full border rounded-lg py-3 flex items-center justify-center gap-2 font-bold transition-all shadow-lg animate-pulse ${nextWalk.status === 'in_progress'
+                                        ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                                        : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                                    }`}>
+                                    <MapPin size={18} />
+                                    {nextWalk.status === 'in_progress' ? "VER MAPA EN VIVO" : "VER PASEADOR Y CHAT"}
+                                </div>
+                            </Link>
+                        )}
 
                         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
                             <div className="flex items-center gap-2 text-gray-400 text-xs">

@@ -114,7 +114,13 @@ export default function BookingPage() {
                             <input
                                 type="date"
                                 className="glass-input w-full cursor-pointer"
-                                min={new Date().toISOString().split('T')[0]}
+                                min={(() => {
+                                    const d = new Date();
+                                    const year = d.getFullYear();
+                                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                                    const day = String(d.getDate()).padStart(2, '0');
+                                    return `${year}-${month}-${day}`;
+                                })()}
                                 value={date || ''}
                                 onClick={(e) => e.currentTarget.showPicker()}
                                 onChange={(e) => setDate(e.target.value)}
@@ -129,7 +135,10 @@ export default function BookingPage() {
                                 min={(() => {
                                     if (!date) return undefined;
                                     const now = new Date();
-                                    const today = now.toISOString().split('T')[0];
+                                    const year = now.getFullYear();
+                                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                                    const day = String(now.getDate()).padStart(2, '0');
+                                    const today = `${year}-${month}-${day}`;
                                     if (date === today) {
                                         // If today, set min time to current time + 1 hour padding visually if supported, 
                                         // though standard time input min is HH:MM.
@@ -171,10 +180,18 @@ export default function BookingPage() {
                                 const selectedDateTime = new Date(`${date}T${time}`);
                                 const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
-                                if (selectedDateTime < oneHourFromNow) {
+                                if (selectedDateTime < now) {
                                     return (
                                         <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-200 text-xs">
-                                            ⚠️ Debes agendar con al menos 1 hora de anticipación.
+                                            ⚠️ La fecha seleccionada ya pasó.
+                                        </div>
+                                    )
+                                }
+
+                                if (selectedDateTime < oneHourFromNow) {
+                                    return (
+                                        <div className="p-3 rounded-lg bg-yellow-500/20 border border-yellow-500/30 text-yellow-200 text-xs">
+                                            ⚠️ <strong>Reserva Inmediata:</strong> Solo se mostrarán paseadores cercanos (3 km).
                                         </div>
                                     )
                                 }
@@ -188,8 +205,8 @@ export default function BookingPage() {
                                 if (!date || !time) return true;
                                 const now = new Date();
                                 const selectedDateTime = new Date(`${date}T${time}`);
-                                const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour buffer
-                                return selectedDateTime < oneHourFromNow;
+                                if (selectedDateTime < now) return true;
+                                return false;
                             })()}
                             onClick={handleNext}
                             className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
@@ -202,35 +219,60 @@ export default function BookingPage() {
                 {/* STEP 3: WALKER SELECTION */}
                 {step === 3 && (
                     <div className="space-y-4">
-                        {walkers.map(w => (
-                            <Card
-                                key={w.user_id}
-                                variant="interactive"
-                                className={cn("flex items-center gap-4 border-2", selectedWalker === w.user_id ? "border-purple-500 bg-purple-500/10" : "border-transparent")}
-                                onClick={() => setSelectedWalker(w.user_id)}
-                            >
-                                <div className="h-12 w-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400">
-                                    <User />
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-white">
-                                            {(Array.isArray(w.profiles) ? w.profiles[0]?.full_name : w.profiles?.full_name) || 'Paseador'}
-                                        </h3>
-                                        {w.birth_date && (
-                                            <span className="text-xs text-gray-400 bg-white/10 px-2 py-0.5 rounded-full">
-                                                {new Date().getFullYear() - new Date(w.birth_date).getFullYear()} años
-                                            </span>
-                                        )}
+                        {(() => {
+                            const now = new Date();
+                            const selectedDateTime = new Date(`${date}T${time}`);
+                            const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+                            const isImmediate = selectedDateTime < oneHourFromNow;
+
+                            const filteredWalkers = isImmediate
+                                ? walkers.filter(w => w.distance !== undefined && w.distance <= 3.0)
+                                : walkers;
+
+                            if (filteredWalkers.length === 0) {
+                                return (
+                                    <div className="p-4 rounded-xl bg-red-500/10 text-red-200 text-sm border border-red-500/20">
+                                        No hay paseadores disponibles {isImmediate ? 'cerca de ti (< 3km) para servicio inmediato.' : 'para esta fecha.'}
+                                        {isImmediate && <p className="mt-2 text-xs opacity-70">Intenta programar con más de 1 hora de anticipación para ver más opciones.</p>}
                                     </div>
-                                    <p className="text-xs text-yellow-500 mb-1">★ {w.rating_avg || 'New'}</p>
-                                    {w.description && (
-                                        <p className="text-xs text-gray-400 line-clamp-2">{w.description}</p>
-                                    )}
-                                </div>
-                                {selectedWalker === w.user_id && <Check className="ml-auto text-purple-500" />}
-                            </Card>
-                        ))}
+                                )
+                            }
+
+                            return filteredWalkers.map(w => (
+                                <Card
+                                    key={w.user_id}
+                                    variant="interactive"
+                                    className={cn("flex items-center gap-4 border-2", selectedWalker === w.user_id ? "border-purple-500 bg-purple-500/10" : "border-transparent")}
+                                    onClick={() => setSelectedWalker(w.user_id)}
+                                >
+                                    <div className="h-12 w-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 shrink-0">
+                                        <User />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h3 className="font-bold text-white truncate">
+                                                {(Array.isArray(w.profiles) ? w.profiles[0]?.full_name : w.profiles?.full_name) || 'Paseador'}
+                                            </h3>
+                                            {typeof w.distance === 'number' && (
+                                                <span className={cn("text-xs px-2 py-0.5 rounded-full flex items-center gap-1", w.distance <= 3 ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400")}>
+                                                    <MapPin className="w-3 h-3" />
+                                                    {w.distance.toFixed(1)} km
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <p className="text-xs text-yellow-500">★ {w.rating_avg || 'New'}</p>
+                                            {w.birth_date && (
+                                                <span className="text-xs text-gray-500">
+                                                    • {new Date().getFullYear() - new Date(w.birth_date).getFullYear()} años
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {selectedWalker === w.user_id && <Check className="ml-auto text-purple-500" />}
+                                </Card>
+                            ))
+                        })()}
                         {walkers.length === 0 && (
                             <div className="p-4 rounded-xl bg-yellow-500/10 text-yellow-200 text-sm">
                                 No hay paseadores disponibles. (Crea una cuenta paseador y apruébala en DB para probar)

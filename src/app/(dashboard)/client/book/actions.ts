@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import { calculateDistance } from '@/utils/distance'
 
 export async function getWalkers() {
     const supabase = await createClient()
@@ -23,8 +24,32 @@ export async function getWalkers() {
         .eq('status', 'approved')
         .limit(10)
 
-    console.log("Walkers found:", walkers)
-    return walkers || []
+    // SIMULATED LOCATION FOR MVP
+    // Client at Plaza Baquedano, Santiago
+    const clientLat = -33.4372
+    const clientLon = -70.6342
+
+    const walkersWithLoc = walkers?.map(w => {
+        // Random location within ~5km
+        // 0.04 degrees is roughly 4-5km
+        const lat = clientLat + (Math.random() - 0.5) * 0.04
+        const lon = clientLon + (Math.random() - 0.5) * 0.04
+
+        const distance = calculateDistance(clientLat, clientLon, lat, lon)
+
+        return {
+            ...w,
+            lat,
+            lon,
+            distance
+        }
+    })
+
+    // Sort by distance (closest first)
+    walkersWithLoc?.sort((a, b) => a.distance - b.distance)
+
+    console.log("Walkers found (with simulated location):", walkersWithLoc?.length)
+    return walkersWithLoc || []
 }
 
 export async function createBooking(formData: FormData) {
@@ -44,6 +69,9 @@ export async function createBooking(formData: FormData) {
     // Combine date/time
     const scheduledAt = new Date(`${date}T${time}`).toISOString()
 
+    // Generate Secure Start Code (4 digits)
+    const start_code = Math.floor(1000 + Math.random() * 9000).toString()
+
     const { error } = await supabase.from('walk_bookings').insert({
         client_id: user.id,
         walker_id: walkerId,
@@ -53,6 +81,7 @@ export async function createBooking(formData: FormData) {
         duration_minutes: duration,
         pickup_address: address,
         price: price,
+        start_code: start_code
     })
 
     if (error) {
@@ -61,4 +90,51 @@ export async function createBooking(formData: FormData) {
     }
 
     redirect('/client')
+}
+
+import { revalidatePath } from 'next/cache'
+
+export async function submitReview(bookingId: string, rating: number, comment: string) {
+    const supabase = await createClient()
+
+    // Check if review exists logic handled in UI/DB constraint, but safe to ignore error or handle
+    const { error } = await supabase
+        .from('walk_reviews')
+        .insert({
+            booking_id: bookingId,
+            rating,
+            comment
+        })
+
+    if (error) {
+        console.error("Review Error:", error)
+        return { error: "Error enviando calificación. ¿Ya calificaste?" }
+    }
+
+    revalidatePath('/client')
+    return { success: true }
+}
+
+export async function sendChatMessage(bookingId: string, content: string, mediaUrl?: string, type: 'text' | 'image' = 'text') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: "Unauthorized" }
+
+    const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+            booking_id: bookingId,
+            sender_id: user.id,
+            content,
+            media_url: mediaUrl,
+            type
+        })
+
+    if (error) {
+        console.error("Chat Error:", error)
+        return { error: "Error sending message" }
+    }
+
+    return { success: true }
 }

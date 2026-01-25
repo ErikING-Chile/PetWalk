@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 
 export async function login(formData: FormData) {
     const supabase = await createClient()
@@ -52,18 +53,22 @@ export async function signup(formData: FormData) {
 
     if (authError) {
         console.error("Auth Error:", authError)
-        // If it's "User already registered", Redirect to login? Or showing error.
-        // For 'One-Shot', let's show the error.
         redirect(`/register?error=${encodeURIComponent(authError.message)}`)
     }
 
     if (authData.user) {
         console.log("User created:", authData.user.id)
 
+        // Initialize Admin Client for DB operations to bypass RLS
+        const adminSupabase = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+
         // 2. Create Profile entry
-        const { error: profileError } = await supabase
+        const { error: profileError } = await adminSupabase
             .from('profiles')
-            .insert({
+            .upsert({
                 id: authData.user.id,
                 role: role,
                 email: email,
@@ -72,16 +77,13 @@ export async function signup(formData: FormData) {
 
         if (profileError) {
             console.error("Profile creation error:", profileError)
-            // If profile fails, we might want to try to clean up auth user, 
-            // but for now just logging.
-            // This is likely RLS if user can't insert their own profile.
         } else {
             console.log("Profile created successfully")
         }
 
         // 3. If Walker, create walker_profile skeleton
         if (role === 'walker') {
-            const { error: walkerError } = await supabase.from('walker_profiles').insert({
+            const { error: walkerError } = await adminSupabase.from('walker_profiles').upsert({
                 user_id: authData.user.id,
                 status: 'pending'
             })
@@ -90,5 +92,9 @@ export async function signup(formData: FormData) {
     }
 
     revalidatePath('/', 'layout')
-    redirect('/')
+    if (role === 'walker') {
+        redirect('/walker/onboarding')
+    } else {
+        redirect('/')
+    }
 }

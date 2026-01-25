@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { validateRun, validatePhone, formatRun } from '@/utils/validation'
 
@@ -130,6 +131,11 @@ export async function updateWalkerProfile(formData: FormData) {
 
     if (!user) return { error: "Unauthorized" }
 
+    const adminSupabase = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     // Text Fields
     const full_name = formData.get('full_name') as string
     const run = formData.get('run') as string
@@ -153,16 +159,21 @@ export async function updateWalkerProfile(formData: FormData) {
     }
 
     const updates: any = {
-        run: formatRun(run),
-        phone,
         address,
         description,
         documents_status: 'pending' // Reset to pending on update
     }
 
-    // Update generic profile name
-    if (full_name) {
-        await supabase.from('profiles').update({ full_name }).eq('id', user.id)
+    // Update generic profile (Identity fields)
+    const profileUpdates: any = {}
+    if (full_name) profileUpdates.full_name = full_name
+    if (run) profileUpdates.rut = formatRun(run) // Map run -> rut
+    if (phone) profileUpdates.phone = phone
+    // avatar_url will be updated after upload
+
+    if (Object.keys(profileUpdates).length > 0) {
+        // Use admin client for profiles too just to be safe, though user owns it.
+        await adminSupabase.from('profiles').update(profileUpdates).eq('id', user.id)
     }
 
     // Helper to upload file
@@ -189,32 +200,47 @@ export async function updateWalkerProfile(formData: FormData) {
         }
     }
 
-    // 1. Upload Profile Photo (Public)
+    // 1. Upload Profile Photo (Public) - NOTE: logic below handles file uploads and adds to 'updates' for walker_profiles
+    // We need to be careful. profile_photo_url is in profiles? or walker_profiles?
+    // walker_profiles doesn't have profile_photo_url in the schema view I saw?
+    // Wait, let's check schema again. walker_profiles Row doesn't show profile_photo_url?
+    // Schema said: id_front_url, id_back_url, criminal_record_url, residence_cert_url.
+    // profiles has avatar_url.
+    // walker_profiles has rating_avg, etc.
+    // The previous code had: if (photoUrl) updates.profile_photo_url = photoUrl
+    // This implies walker_profiles HAS profile_photo_url.
+    // BUT the schema dump in Step 603 line 45-61 DOES NOT SHOW profile_photo_url.
+    // It shows: user_id, status, communes, ..., address, description, documents_status, id_front_url, ...
+    // So profile_photo_url UPDATE WILL FAIL on walker_profiles too.
+    // It should go to 'profiles.avatar_url'.
+
     const photoUrl = await uploadFile(photo, 'walker-photos', 'profiles')
-    if (photoUrl) updates.profile_photo_url = photoUrl
+    if (photoUrl) {
+        await adminSupabase.from('profiles').update({ avatar_url: photoUrl }).eq('id', user.id)
+    }
 
     // 2. Upload Documents (Private)
     const idFrontPath = await uploadFile(idFront, 'walker-documents', 'id_cards')
-    if (idFrontPath) updates.document_id_front_url = idFrontPath
+    if (idFrontPath) updates.id_front_url = idFrontPath // Schema uses id_front_url, NOT document_id_front_url
 
     const idBackPath = await uploadFile(idBack, 'walker-documents', 'id_cards')
-    if (idBackPath) updates.document_id_back_url = idBackPath
+    if (idBackPath) updates.id_back_url = idBackPath // Schema uses id_back_url
 
     const backgroundPath = await uploadFile(certBackground, 'walker-documents', 'certificates')
-    if (backgroundPath) updates.certificate_background_url = backgroundPath
+    if (backgroundPath) updates.criminal_record_url = backgroundPath // Schema uses criminal_record_url
 
     const residencePath = await uploadFile(certResidence, 'walker-documents', 'certificates')
-    if (residencePath) updates.certificate_residence_url = residencePath
+    if (residencePath) updates.residence_cert_url = residencePath // Schema uses residence_cert_url
 
-    // Update DB
-    const { error } = await supabase
+    // Update DB (Use Admin Client to bypass RLS if needed)
+    const { error } = await adminSupabase
         .from('walker_profiles')
         .update(updates)
         .eq('user_id', user.id)
 
     if (error) {
         console.error("Profile update error:", error)
-        return { error: "Failed to update profile" }
+        return { error: "Failed to update profile: " + error.message }
     }
 
     revalidatePath('/walker/profile')

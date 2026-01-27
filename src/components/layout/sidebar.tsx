@@ -19,24 +19,24 @@ import {
 // Define navigation items for each role
 const navItems = {
     client: [
-        { name: 'Dashboard', href: '/client', icon: LayoutDashboard },
-        { name: 'My Pets', href: '/client/pets', icon: Dog },
-        { name: 'Book a Walk', href: '/client/book', icon: MapPin },
+        { name: 'Inicio', href: '/client', icon: LayoutDashboard },
+        { name: 'Mis Mascotas', href: '/client/pets', icon: Dog },
+        { name: 'Pasear', href: '/client/book', icon: MapPin },
         { name: 'Marketplace', href: '/client/marketplace', icon: ShoppingBag },
-        { name: 'Settings', href: '/client/settings', icon: Settings },
+        { name: 'Configuración', href: '/client/settings', icon: Settings },
     ],
     walker: [
-        { name: 'Dashboard', href: '/walker', icon: LayoutDashboard },
-        { name: 'My Schedule', href: '/walker/schedule', icon: Calendar },
-        { name: 'History', href: '/walker/history', icon: MapPin },
-        { name: 'Earnings', href: '/walker/earnings', icon: ShoppingBag },
-        { name: 'Profile', href: '/walker/profile', icon: User },
+        { name: 'Inicio', href: '/walker', icon: LayoutDashboard },
+        { name: 'Mi Agenda', href: '/walker/schedule', icon: Calendar },
+        { name: 'Historial', href: '/walker/history', icon: MapPin },
+        { name: 'Ganancias', href: '/walker/earnings', icon: ShoppingBag },
+        { name: 'Perfil', href: '/walker/profile', icon: User },
     ],
     admin: [
-        { name: 'Overview', href: '/admin', icon: LayoutDashboard },
-        { name: 'Validations', href: '/admin/validations', icon: ShieldCheck },
-        { name: 'Walks', href: '/admin/walks', icon: Dog },
-        { name: 'Users', href: '/admin/users', icon: User },
+        { name: 'Resumen', href: '/admin', icon: LayoutDashboard },
+        { name: 'Validaciones', href: '/admin/validations', icon: ShieldCheck },
+        { name: 'Paseos', href: '/admin/walks', icon: Dog },
+        { name: 'Usuarios', href: '/admin/users', icon: User },
         { name: 'Marketplace', href: '/admin/marketplace', icon: ShoppingBag },
     ],
 }

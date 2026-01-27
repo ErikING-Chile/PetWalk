@@ -29,10 +29,19 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
                     {booking.status === 'assigned' ? 'Paseador en Camino' : 'Seguimiento en Vivo'}
                 </h1>
-                <p className="text-gray-400 text-sm flex items-center gap-2">
+                <p className="text-gray-400 text-sm flex items-center gap-2 mb-4">
                     <MapPin className="w-4 h-4 text-purple-400" />
                     {booking.status === 'assigned' ? 'Tu paseador viene hacia ti' : 'Paseando a tu mascota'}
                 </p>
+
+                {/* Verification Code Display */}
+                {booking.status === 'assigned' && booking.start_verification_code && (
+                    <div className="bg-gradient-to-r from-pink-500/20 to-purple-600/20 border border-purple-500/30 rounded-xl p-4 text-center animate-pulse">
+                        <p className="text-xs text-uppercase text-purple-300 font-bold mb-1 tracking-wider">CÓDIGO DE INICIO</p>
+                        <p className="text-4xl font-mono font-bold text-white tracking-[0.5em]">{booking.start_verification_code}</p>
+                        <p className="text-[10px] text-gray-400 mt-2">Dicta este código al paseador cuando llegue.</p>
+                    </div>
+                )}
             </div>
 
             {/* MAP SECTION - Fixed Height */}

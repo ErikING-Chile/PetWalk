@@ -95,6 +95,6 @@ export async function signup(formData: FormData) {
     if (role === 'walker') {
         redirect('/walker/onboarding')
     } else {
-        redirect('/')
+        redirect('/client/onboarding')
     }
 }

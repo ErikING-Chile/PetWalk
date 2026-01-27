@@ -13,15 +13,15 @@ export function BottomNav({ role }: BottomNavProps) {
     const pathname = usePathname()
 
     const clientLinks = [
-        { href: "/client", label: "Home", icon: Home },
+        { href: "/client", label: "Inicio", icon: Home },
         { href: "/client/book", label: "Pasear", icon: Dog },
         { href: "/client/pets", label: "Mascotas", icon: ListChecks },
         { href: "/client/profile", label: "Perfil", icon: User },
     ]
 
     const walkerLinks = [
-        { href: "/walker", label: "Agenda", icon: Calendar },
-        { href: "/walker/requests", label: "Solicitudes", icon: Bell },
+        { href: "/walker/schedule", label: "Agenda", icon: Calendar },
+        { href: "/walker", label: "Solicitudes", icon: Bell },
         { href: "/walker/history", label: "Historial", icon: ListChecks },
         { href: "/walker/profile", label: "Perfil", icon: User },
     ]

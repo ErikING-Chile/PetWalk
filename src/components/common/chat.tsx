@@ -140,27 +140,31 @@ export function ChatComponent({ bookingId, currentUserId }: { bookingId: string,
                     className="hidden"
                     ref={fileInputRef}
                     onChange={handleFileUpload}
+                    suppressHydrationWarning
                 />
 
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10 disabled:opacity-50"
+                    className="shrink-0 h-10 w-10 flex items-center justify-center text-gray-400 hover:text-white rounded-full hover:bg-white/10 disabled:opacity-50"
+                    suppressHydrationWarning
                 >
-                    <Paperclip size={18} />
+                    <Paperclip size={20} />
                 </button>
 
                 <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Escribe un mensaje..."
-                    className="flex-1 bg-black/40 text-white text-sm rounded-full px-4 py-2 border border-white/10 focus:border-purple-500 outline-none"
+                    placeholder="Escribe..."
+                    className="flex-1 h-10 bg-black/40 text-white text-sm rounded-full px-4 border border-white/10 focus:border-purple-500 outline-none min-w-0"
+                    suppressHydrationWarning
                 />
                 <button
                     onClick={handleSend}
                     disabled={!input.trim()}
-                    className="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-full disabled:opacity-50 transition-colors"
+                    className="shrink-0 h-10 w-10 flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white rounded-full disabled:opacity-50 transition-colors"
+                    suppressHydrationWarning
                 >
                     <Send size={18} />
                 </button>

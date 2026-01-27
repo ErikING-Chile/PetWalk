@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card"
 import { createClient } from "@/utils/supabase/server"
 import { User, Star, MapPin, Award } from "lucide-react"
+import { SignOutButton } from "@/components/auth/sign-out-button"
 
 export default async function WalkerProfilePage() {
     const supabase = await createClient()
@@ -14,21 +15,23 @@ export default async function WalkerProfilePage() {
     const isPending = walkerProfile?.documents_status === 'pending'
     const isApproved = walkerProfile?.documents_status === 'approved'
     const isRejected = walkerProfile?.documents_status === 'rejected'
-    const hasProfileData = walkerProfile?.run && walkerProfile?.phone
+    const hasProfileData = profile?.rut && profile?.phone
 
     return (
         <div className="space-y-6 pb-20">
             {/* Verification Status Banners */}
-            {!hasProfileData && (
+            {!hasProfileData && !isPending && (
                 <div className="bg-blue-500/20 border border-blue-500/30 p-4 rounded-xl text-blue-200 mb-4">
                     <h3 className="font-bold mb-1">Perfil Incompleto</h3>
                     <p className="text-sm opacity-80">Debes completar tu información y subir tus documentos para comenzar a pasear.</p>
                 </div>
             )}
-            {hasProfileData && isPending && (
+            {isPending && (
                 <div className="bg-yellow-500/20 border border-yellow-500/30 p-4 rounded-xl text-yellow-200 mb-4">
                     <h3 className="font-bold mb-1">Verificación en Proceso</h3>
-                    <p className="text-sm opacity-80">Tus documentos están siendo revisados. Este proceso toma máx. 24 horas.</p>
+                    <p className="text-sm opacity-80">
+                        Tus documentos están siendo revisados por nuestro equipo. En un plazo máximo de 24 horas aprobaremos tu perfil o te contactaremos si existe algún problema con la documentación enviada.
+                    </p>
                 </div>
             )}
 
@@ -65,9 +68,16 @@ export default async function WalkerProfilePage() {
                 )}
 
                 <div className="flex justify-center mt-3">
-                    <a href="/walker/profile/edit" className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors border border-white/10">
-                        {hasProfileData ? "Editar Perfil" : "Completar Perfil"}
-                    </a>
+                    {!isPending && (
+                        <a href="/walker/profile/edit" className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors border border-white/10">
+                            {hasProfileData ? "Editar Perfil" : "Completar Perfil"}
+                        </a>
+                    )}
+                    {isPending && (
+                        <div className="px-4 py-2 bg-white/5 rounded-lg text-sm transition-colors border border-white/10 text-gray-400 cursor-not-allowed">
+                            Perfil en Revisión
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -100,6 +110,8 @@ export default async function WalkerProfilePage() {
                     </div>
                 </div>
             </div>
+
+            <SignOutButton />
         </div>
     )
 }

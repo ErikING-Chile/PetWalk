@@ -33,7 +33,7 @@ export default async function LoginPage({
                     </div>
                 )}
 
-                <form className="mt-8 space-y-6">
+                <form className="mt-8 space-y-6" suppressHydrationWarning>
                     <div className="space-y-4">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-300">
@@ -45,6 +45,7 @@ export default async function LoginPage({
                                 type="email"
                                 autoComplete="email"
                                 required
+                                suppressHydrationWarning
                                 className="mt-1 block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 shadow-sm focus:border-purple-500 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-purple-500 sm:text-sm transition-all"
                                 placeholder="you@example.com"
                             />
@@ -60,6 +61,7 @@ export default async function LoginPage({
                                 type="password"
                                 autoComplete="current-password"
                                 required
+                                suppressHydrationWarning
                                 className="mt-1 block w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 shadow-sm focus:border-purple-500 focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-purple-500 sm:text-sm transition-all"
                                 placeholder="••••••••"
                             />

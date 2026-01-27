@@ -51,6 +51,13 @@ export interface Database {
                     pet_types: string[] | null
                     rating_avg: number | null
                     total_walks: number | null
+                    address: string | null
+                    description: string | null
+                    documents_status: 'pending' | 'approved' | 'rejected'
+                    id_front_url: string | null
+                    id_back_url: string | null
+                    criminal_record_url: string | null
+                    residence_cert_url: string | null
                 }
                 Insert: {
                     user_id: string
@@ -61,6 +68,13 @@ export interface Database {
                     pet_types?: string[] | null
                     rating_avg?: number | null
                     total_walks?: number | null
+                    address?: string | null
+                    description?: string | null
+                    documents_status?: 'pending' | 'approved' | 'rejected'
+                    id_front_url?: string | null
+                    id_back_url?: string | null
+                    criminal_record_url?: string | null
+                    residence_cert_url?: string | null
                 }
                 Update: {
                     user_id?: string
@@ -71,6 +85,13 @@ export interface Database {
                     pet_types?: string[] | null
                     rating_avg?: number | null
                     total_walks?: number | null
+                    address?: string | null
+                    description?: string | null
+                    documents_status?: 'pending' | 'approved' | 'rejected'
+                    id_front_url?: string | null
+                    id_back_url?: string | null
+                    criminal_record_url?: string | null
+                    residence_cert_url?: string | null
                 }
             }
             pets: {

@@ -1,16 +1,17 @@
 import { Card } from "@/components/ui/card"
-import { Dog, MapPin, Clock, Calendar, ChevronRight } from "lucide-react"
+import { Dog, MapPin, Clock, Calendar, ChevronRight, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/server"
-import { format } from "date-fns"
+import { format, subDays, isSameDay } from "date-fns"
 import { es } from "date-fns/locale"
+import { WalkChart } from "@/components/dashboard/walk-chart"
 
 export default async function ClientDashboard() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     // Find user's name
-    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user?.id).single()
+    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', user?.id).single()
     const name = profile?.full_name?.split(' ')[0] || "Dueño"
 
     // Fetch Next Walk (Active: Requested, Assigned, In Progress)
@@ -59,6 +60,27 @@ export default async function ClientDashboard() {
 
     const totalKm = (totalWalks || 0) * 2.5 // Mock: 2.5km per walk average
 
+    // Prepare Chart Data
+    const today = new Date()
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date()
+        d.setDate(d.getDate() - (6 - i))
+        return d
+    })
+
+    const { data: recentWalks } = await supabase
+        .from('walk_bookings')
+        .select('scheduled_at')
+        .eq('client_id', user?.id)
+        .eq('status', 'completed')
+        .gte('scheduled_at', subDays(today, 7).toISOString())
+
+    const chartData = last7Days.map(date => {
+        const dayStr = format(date, 'EEE', { locale: es })
+        const count = recentWalks?.filter(w => isSameDay(new Date(w.scheduled_at), date)).length || 0
+        return { day: dayStr.charAt(0).toUpperCase() + dayStr.slice(1), count }
+    })
+
     return (
         <div className="space-y-6 pb-20">
             {/* Header */}
@@ -70,9 +92,13 @@ export default async function ClientDashboard() {
                     <p className="text-sm text-gray-400">¿Listo para el paseo de hoy?</p>
                 </div>
                 <div className="h-10 w-10 rounded-full bg-white/10 overflow-hidden border border-white/20">
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
-                        {name[0]}
-                    </div>
+                    {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                            {name[0]}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -87,6 +113,22 @@ export default async function ClientDashboard() {
                         </div>
                         <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
                             <Dog className="text-white" size={20} />
+                        </div>
+                    </div>
+                </Card>
+            </Link>
+
+            {/* Marketplace Button - Added per request */}
+            <Link href="/client/marketplace">
+                <Card variant="interactive" className="bg-gradient-to-r from-blue-600 to-cyan-600 border-none relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 blur-3xl rounded-full -mr-10 -mt-10" />
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-bold text-white">Tienda PetWalk</h2>
+                            <p className="text-blue-100 text-xs mt-1">Accesorios, comida y más para tu mascota</p>
+                        </div>
+                        <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <ShoppingBag className="text-white" size={20} />
                         </div>
                     </div>
                 </Card>
@@ -152,8 +194,8 @@ export default async function ClientDashboard() {
                         {(nextWalk.status === 'in_progress' || nextWalk.status === 'assigned') && (
                             <Link href={`/client/track/${nextWalk.id}`} className="mt-4 block">
                                 <div className={`w-full border rounded-lg py-3 flex items-center justify-center gap-2 font-bold transition-all shadow-lg animate-pulse ${nextWalk.status === 'in_progress'
-                                        ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
-                                        : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                                    ? "bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                                    : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
                                     }`}>
                                     <MapPin size={18} />
                                     {nextWalk.status === 'in_progress' ? "VER MAPA EN VIVO" : "VER PASEADOR Y CHAT"}
@@ -238,6 +280,9 @@ export default async function ClientDashboard() {
                     <span className="text-xs text-gray-400">Km Recorridos</span>
                 </Card>
             </div>
+
+            {/* Walk History Chart */}
+            <WalkChart data={chartData} />
         </div>
     )
 }

@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client"
 import { Card } from "@/components/ui/card"
 import { Camera, User, MapPin, Phone, Mail, Save } from "lucide-react"
 import { formatRut, validateRut } from "@/lib/formatters"
+import { validatePhone } from "@/utils/validation"
 
 export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { initialData?: any, redirectTo?: string | null }) {
     const router = useRouter()
@@ -39,10 +40,7 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
         }
     }, [initialData])
 
-    const validatePhone = (phone: string) => {
-        const phoneRegex = /^(\+?)[0-9]{8,15}$/
-        return phoneRegex.test(phone)
-    }
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -108,8 +106,12 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
             return
         }
 
-        if (formData.phone.length < 8) {
-            alert("Por favor ingresa un teléfono válido.")
+
+        // Prepend +56 for validation and storage (validation expects +569...)
+        const formattedPhone = `+56${formData.phone}`
+
+        if (!validatePhone(formattedPhone)) {
+            alert("Por favor ingresa un teléfono válido (ej: 9 1234 5678).")
             return
         }
 

@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation"
 import LiveMap from "@/components/client/live-map"
 import { MapPin, Clock, Phone } from "lucide-react"
 import { ChatComponent } from "@/components/common/chat"
+import { CancellationControls } from "@/components/client/cancellation-controls"
+import { RatingForm } from "@/components/client/rating-form"
 
 export default async function TrackingPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -49,19 +51,27 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
                 <LiveMap bookingId={id} />
 
                 {/* Info Card */}
-                <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-md p-3 rounded-xl border border-white/10 z-[1000]">
+                <div className="absolute top-4 right-4 bg-gray-900/90 backdrop-blur-md p-3 rounded-xl border border-white/20 shadow-xl z-[1000]">
                     <div className="flex items-center gap-2 mb-1">
                         <div className={`h-2 w-2 rounded-full animate-pulse ${booking.status === 'in_progress' ? 'bg-green-500' : 'bg-blue-500'}`} />
                         <span className="text-xs font-bold text-white uppercase">
                             {booking.status === 'in_progress' ? 'EN CURSO' : 'ASIGNADO'}
                         </span>
                     </div>
-                    <p className="text-xs text-white opacity-80">{booking.walker?.full_name || 'Paseador'}</p>
+                    <p className="text-xs text-white opacity-90 font-medium">{booking.walker?.full_name || 'Paseador'}</p>
                 </div>
             </div>
 
             {/* ACTIONS & CHAT - Scrollable Area */}
             <div className="p-4 space-y-4 bg-black flex-1">
+
+                {/* Cancellation / Termination Options */}
+                <CancellationControls bookingId={id} status={booking.status} />
+
+                {/* Rating if Cancelled by Walker */}
+                {booking.status === 'cancelled' && booking.cancelled_by === 'walker' && (
+                    <RatingForm bookingId={id} />
+                )}
                 {/* Call Button */}
                 {booking.walker?.phone ? (
                     <a href={`tel:${booking.walker.phone}`} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95">

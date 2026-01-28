@@ -112,7 +112,7 @@ export default function WalkerMapCore({ bookingId }: { bookingId: string }) {
             <MapRecenter lat={coords.lat} lng={coords.lng} />
 
             {/* Status Overlay */}
-            <div className="absolute top-4 left-4 z-[1000] bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-xs text-white border border-green-500/50 flex items-center gap-2">
+            <div className="absolute top-4 left-4 z-[1000] bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-full text-xs font-bold text-white border border-white/20 shadow-lg flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                 {status}
             </div>

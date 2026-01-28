@@ -69,3 +69,11 @@ export function formatPhone(phone: string): string {
     // We will handle the display logic in the component, here we can just ensure it's digits.
     return cleanPhone;
 }
+
+export function formatPrice(amount: number): string {
+    return new Intl.NumberFormat('es-CL', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount)
+}

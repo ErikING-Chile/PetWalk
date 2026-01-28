@@ -40,10 +40,61 @@ export async function acceptBooking(bookingId: string) {
     revalidatePath('/walker')
 }
 
+// ... (existing code)
+
+export async function rejectBooking(bookingId: string) {
+    const supabase = await createClient()
+
+    // Use Admin Client to bypass RLS (since walker doesn't "own" the row yet)
+    // This allows us to reject a 'requested' booking.
+    const adminSupabase = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { error } = await adminSupabase.from('walk_bookings')
+        .update({ status: 'rejected' })
+        .eq('id', bookingId)
+
+    if (error) {
+        console.error("Error rejecting booking:", error)
+        return { error: error.message }
+    }
+
+    revalidatePath('/walker')
+    return { success: true }
+}
+
 export async function startWalk(bookingId: string) {
+    // ... (existing code)
     const supabase = await createClient()
     await supabase.from('walk_bookings').update({ status: 'in_progress' }).eq('id', bookingId)
     revalidatePath('/walker')
+}
+
+export async function cancelWalkByWalker(bookingId: string, reason: string) {
+    const supabase = await createClient()
+
+    // Assuming assigned status. 
+    // Usually walker can cancel 'assigned'. If 'in_progress', it's complicated but let's allow it for MVP with a note.
+
+    // Check if it's assigned to this user? RLS handles it if we use standard client, 
+    // but if we used admin for reject, maybe we need it here?
+    // If status is 'assigned', walker_id is set to this user. So standard client works.
+
+    const { error } = await supabase.from('walk_bookings')
+        .update({
+            status: 'cancelled',
+            notes: `Cancelado por paseador: ${reason}`,
+            cancelled_by: 'walker'
+        })
+        .eq('id', bookingId)
+        .eq('status', 'assigned') // Only allow cancelling assigned walks for now via this specific flow?
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/walker')
+    return { success: true }
 }
 
 export async function verifyAndStartWalk(bookingId: string, code: string) {

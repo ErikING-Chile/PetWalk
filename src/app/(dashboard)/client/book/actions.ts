@@ -64,7 +64,7 @@ export async function createBooking(formData: FormData) {
     const time = formData.get('time') as string
     const duration = parseInt(formData.get('duration') as string)
     const price = parseInt(formData.get('price') as string)
-    const address = "Mi ubicación actual (Simulada)" // Hardcoded for MVP One-Shot
+    const address = "Plaza Baquedano, Santiago| -33.4372, -70.6342" // Address | Lat, Lng
 
     // Combine date/time
     const scheduledAt = new Date(`${date}T${time}`).toISOString()
@@ -136,5 +136,60 @@ export async function sendChatMessage(bookingId: string, content: string, mediaU
         return { error: "Error sending message" }
     }
 
+    return { success: true }
+}
+
+export async function cancelBooking(bookingId: string, reason: string) {
+    const supabase = await createClient()
+
+    // Only 'requested' or 'assigned' can be cancelled by user logic (before start)
+    // We should verify status first ideally, but RLS/security logic often handles owner check.
+
+    const { error } = await supabase
+        .from('walk_bookings')
+        .update({
+            status: 'cancelled',
+            notes: `Cancelado por dueño: ${reason}`,
+            cancelled_by: 'client'
+        })
+        .eq('id', bookingId)
+        .in('status', ['requested', 'assigned'])
+
+    if (error) {
+        console.error("Error cancelling booking:", error)
+        return { error: "Error cancelling booking or too late to cancel." }
+    }
+
+    console.log(`Booking ${bookingId} cancelled by client`)
+
+    revalidatePath('/client')
+    revalidatePath(`/client/track/${bookingId}`)
+    return { success: true }
+}
+
+export async function terminateWalkEarly(bookingId: string, reason: string) {
+    const supabase = await createClient()
+
+    // Fetch current price to add penalty
+    const { data: booking } = await supabase.from('walk_bookings').select('price').eq('id', bookingId).single()
+
+    if (!booking) return { error: "Booking not found" }
+
+    const newPrice = (booking.price || 0) + 3000
+
+    const { error } = await supabase
+        .from('walk_bookings')
+        .update({
+            status: 'completed', // Terminated early count as completed but with penalty? Or 'cancelled'? User said "termino del paseo". Usually means completed but stopped early.
+            price: newPrice,
+            notes: `Terminado anticipadamente por el dueño (+3000 por multa). Motivo: ${reason}`
+        })
+        .eq('id', bookingId)
+        .eq('status', 'in_progress')
+
+    if (error) return { error: "Error terminating walk." }
+
+    revalidatePath('/client')
+    revalidatePath(`/client/track/${bookingId}`)
     return { success: true }
 }

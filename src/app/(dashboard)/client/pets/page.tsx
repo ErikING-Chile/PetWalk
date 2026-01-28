@@ -17,11 +17,14 @@ export default async function PetsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-white">Mis Mascotas</h1>
-                <Link href="/client/pets/create">
-                    <button className="bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors border border-white/20">
-                        <Plus size={24} />
-                    </button>
-                </Link>
+                {pets && pets.length > 0 && (
+                    <Link href="/client/pets/create">
+                        <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-white font-bold shadow-lg shadow-purple-900/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 text-sm">
+                            <Plus size={18} />
+                            Agregar
+                        </button>
+                    </Link>
+                )}
             </div>
 
             <div className="grid gap-4">
@@ -55,9 +58,34 @@ export default async function PetsPage() {
                         </Card>
                     ))
                 ) : (
-                    <div className="text-center py-10 opacity-50">
-                        <p>No tienes mascotas registradas.</p>
-                        <p className="text-sm">¡Agrega una para empezar!</p>
+                    <div className="flex flex-col items-center justify-center py-12 px-4 space-y-6">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 blur-2xl opacity-20 rounded-full" />
+                            <div className="relative bg-white/5 border border-white/10 p-6 rounded-full">
+                                <div className="flex -space-x-4">
+                                    <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center border-2 border-[#0a0a0a]">
+                                        <Dog size={24} className="text-purple-400" />
+                                    </div>
+                                    <div className="h-12 w-12 rounded-full bg-pink-500/20 flex items-center justify-center border-2 border-[#0a0a0a]">
+                                        <Cat size={24} className="text-pink-400" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="text-center space-y-2 max-w-xs">
+                            <h3 className="text-xl font-bold text-white">¡Aún no tienes mascotas!</h3>
+                            <p className="text-sm text-gray-400">
+                                Agrega a tus peludos amigos para poder agendarles paseos increíbles.
+                            </p>
+                        </div>
+
+                        <Link href="/client/pets/create">
+                            <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-bold shadow-lg shadow-purple-900/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                                <Plus size={20} />
+                                Agregar mi primera mascota
+                            </button>
+                        </Link>
                     </div>
                 )}
             </div>

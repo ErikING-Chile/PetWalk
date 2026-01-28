@@ -1,6 +1,8 @@
 import { WalkerInvitationCard } from "@/components/walker/invitation-card"
 import { getWalkerRequests } from "./actions"
 
+export const dynamic = 'force-dynamic'
+
 export default async function WalkerDashboard() {
     const requests = await getWalkerRequests()
 

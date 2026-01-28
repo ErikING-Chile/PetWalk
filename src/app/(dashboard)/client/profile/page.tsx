@@ -2,6 +2,8 @@ import { createClient } from "@/utils/supabase/server"
 import { SignOutButton } from "@/components/auth/sign-out-button"
 import { ClientOnboardingForm } from "@/components/client/onboarding-form"
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProfilePage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

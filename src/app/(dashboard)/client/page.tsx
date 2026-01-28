@@ -6,6 +6,8 @@ import { format, subDays, isSameDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { WalkChart } from "@/components/dashboard/walk-chart"
 
+export const dynamic = 'force-dynamic'
+
 export default async function ClientDashboard() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

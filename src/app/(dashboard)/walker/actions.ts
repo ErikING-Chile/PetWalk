@@ -233,7 +233,7 @@ export async function updateWalkerProfile(formData: FormData) {
         const fileExt = file.name.split('.').pop()
         const fileName = `${pathPrefix}/${user.id}_${Date.now()}.${fileExt}`
 
-        const { error, data } = await supabase.storage
+        const { error, data } = await adminSupabase.storage
             .from(bucket)
             .upload(fileName, file, { upsert: true })
 
@@ -244,7 +244,7 @@ export async function updateWalkerProfile(formData: FormData) {
 
         // Return appropriate URL
         if (bucket === 'walker-photos') {
-            const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName)
+            const { data: { publicUrl } } = adminSupabase.storage.from(bucket).getPublicUrl(fileName)
             return publicUrl
         } else {
             return fileName
@@ -284,10 +284,15 @@ export async function updateWalkerProfile(formData: FormData) {
     if (residencePath) updates.residence_cert_url = residencePath // Schema uses residence_cert_url
 
     // Update DB (Use Admin Client to bypass RLS if needed)
+    // Use upsert to ensure row exists
     const { error } = await adminSupabase
         .from('walker_profiles')
-        .update(updates)
-        .eq('user_id', user.id)
+        .upsert({
+            user_id: user.id,
+            ...updates,
+            // Ensure status is pending if creating new
+            status: 'pending'
+        }, { onConflict: 'user_id' })
 
     if (error) {
         console.error("Profile update error:", error)

@@ -24,9 +24,10 @@ function validateRut(rut: string): boolean {
 
 // Helper: Phone Validation
 function validatePhone(phone: string): boolean {
-    // Accepts +56912345678 or 912345678 (must be 9 digits after +56)
-    // Simple regex: starts with +569 and followed by 8 digits
-    return /^\+569[0-9]{8}$/.test(phone.replace(/\s/g, ''))
+    // Accepts 912345678 (must be 8-9 digits)
+    // Simple regex: 8 or 9 digits
+    const clean = phone.replace(/\D/g, '')
+    return /^[0-9]{8,9}$/.test(clean)
 }
 
 export default function WalkerOnboardingPage() {
@@ -37,7 +38,8 @@ export default function WalkerOnboardingPage() {
 
     // Form Strings
     const [formData, setFormData] = useState({
-        full_name: "",
+        first_name: "",
+        last_name: "",
         rut: "",
         phone: "",
         address: "",
@@ -112,9 +114,10 @@ export default function WalkerOnboardingPage() {
         setIsSubmitting(true)
         try {
             const data = new FormData()
-            data.append('full_name', formData.full_name)
+            data.append('full_name', `${formData.first_name} ${formData.last_name}`.trim())
             data.append('run', formData.rut) // Action uses 'run'
-            data.append('phone', formData.phone)
+            // Add +56 prefix
+            data.append('phone', `+56${formData.phone}`)
             data.append('address', formData.address)
             data.append('description', formData.description)
 
@@ -163,9 +166,15 @@ export default function WalkerOnboardingPage() {
                         </div>
 
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">Nombre Completo</label>
-                                <input name="full_name" value={formData.full_name} onChange={handleChange} className="glass-input w-full" placeholder="Juan Pérez" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Nombres</label>
+                                    <input name="first_name" value={formData.first_name} onChange={handleChange} className="glass-input w-full" placeholder="Juan Pablo" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-1">Apellidos</label>
+                                    <input name="last_name" value={formData.last_name} onChange={handleChange} className="glass-input w-full" placeholder="Pérez" />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">RUT</label>
@@ -180,13 +189,22 @@ export default function WalkerOnboardingPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-1">Teléfono</label>
-                                <input
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    className={`glass-input w-full ${errors.phone ? 'border-red-500' : ''}`}
-                                    placeholder="+56912345678"
-                                />
+                                <div className="relative">
+                                    <div className="absolute left-3 top-0 bottom-0 flex items-center pointer-events-none">
+                                        <span className="text-gray-400 text-sm font-medium">+56</span>
+                                    </div>
+                                    <input
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={(e) => {
+                                            // Ensure only numbers
+                                            const val = e.target.value.replace(/\D/g, '')
+                                            handleChange({ target: { name: 'phone', value: val } } as any)
+                                        }}
+                                        className={`glass-input w-full !pl-12 ${errors.phone ? 'border-red-500' : ''}`}
+                                        placeholder="912345678"
+                                    />
+                                </div>
                                 {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
                             </div>
                             <div>
@@ -216,7 +234,7 @@ export default function WalkerOnboardingPage() {
 
                         <button
                             onClick={handleNextStep}
-                            disabled={!formData.full_name || !formData.rut || !formData.phone || !formData.address}
+                            disabled={!formData.first_name || !formData.last_name || !formData.rut || !formData.phone || !formData.address}
                             className="btn-primary w-full py-4 flex items-center justify-center gap-2 mt-8 disabled:opacity-50"
                         >
                             Siguiente <ChevronRight size={18} />

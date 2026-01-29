@@ -6,16 +6,11 @@ import { Upload, CheckCircle, ChevronRight, ChevronLeft, Loader2, MapPin, File, 
 import { createClient } from "@/utils/supabase/client"
 import { updateWalkerProfile } from "@/app/(dashboard)/walker/actions"
 import { formatRut, validateRut } from "@/lib/formatters"
+import { validatePhone } from "@/utils/validation"
 
 
 
-// Helper: Phone Validation
-function validatePhone(phone: string): boolean {
-    // Accepts 912345678 (must be 8-9 digits)
-    // Simple regex: 8 or 9 digits
-    const clean = phone.replace(/\D/g, '')
-    return /^[0-9]{8,9}$/.test(clean)
-}
+
 
 export default function WalkerOnboardingPage() {
     const [step, setStep] = useState(1)
@@ -75,8 +70,8 @@ export default function WalkerOnboardingPage() {
             valid = false
         }
 
-        if (!validatePhone(formData.phone)) {
-            newErrors.phone = "Teléfono inválido (ej: +56912345678)"
+        if (!validatePhone(`+56${formData.phone}`)) {
+            newErrors.phone = "Teléfono inválido (ej: 9 1234 5678)"
             valid = false
         }
 
@@ -195,7 +190,10 @@ export default function WalkerOnboardingPage() {
                                         onChange={(e) => {
                                             // Ensure only numbers
                                             const val = e.target.value.replace(/\D/g, '')
-                                            handleChange({ target: { name: 'phone', value: val } } as any)
+                                            // Limit to 9 digits (9 + 8 digits)
+                                            if (val.length <= 9) {
+                                                handleChange({ target: { name: 'phone', value: val } } as any)
+                                            }
                                         }}
                                         className={`glass-input w-full !pl-12 ${errors.phone ? 'border-red-500' : ''}`}
                                         placeholder="912345678"

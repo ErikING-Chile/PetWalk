@@ -58,7 +58,7 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
         if (name === "phone") {
             // Allow only numbers
             const numericValue = value.replace(/\D/g, "")
-            // Limit to 9 digits
+            // Limit to 9 digits (9 + 8 digits for mobile)
             if (numericValue.length <= 9) {
                 setFormData(prev => ({ ...prev, [name]: numericValue }))
             }

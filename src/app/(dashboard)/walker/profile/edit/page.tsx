@@ -110,17 +110,26 @@ export default function EditWalkerProfilePage() {
                                         required
                                         onChange={(e) => {
                                             const val = e.target.value.replace(/\D/g, '')
-                                            // Only validate if we have enough digits e.g. 9
-                                            if (val.length >= 8) {
-                                                const fullPhone = `+56${val}`
-                                                if (!validatePhone(fullPhone)) {
-                                                    setErrors(prev => ({ ...prev, phone: "Formato inválido (Ej: 9 1234 5678)" }))
-                                                } else {
-                                                    setErrors(prev => {
-                                                        const { phone, ...rest } = prev
-                                                        return rest
-                                                    })
+
+                                            // Limit length to 9
+                                            if (val.length <= 9) {
+                                                e.target.value = val
+
+                                                // Only validate if we have enough digits e.g. 9
+                                                if (val.length === 9) {
+                                                    const fullPhone = `+56${val}`
+                                                    if (!validatePhone(fullPhone)) {
+                                                        setErrors(prev => ({ ...prev, phone: "Formato inválido (Ej: 9 1234 5678)" }))
+                                                    } else {
+                                                        setErrors(prev => {
+                                                            const { phone, ...rest } = prev
+                                                            return rest
+                                                        })
+                                                    }
                                                 }
+                                            } else {
+                                                // Prevent input > 9
+                                                e.target.value = val.slice(0, 9)
                                             }
                                         }}
                                     />

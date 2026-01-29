@@ -5,22 +5,9 @@ import { useRouter } from "next/navigation"
 import { Upload, CheckCircle, ChevronRight, ChevronLeft, Loader2, MapPin, File, ShieldCheck, User } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 import { updateWalkerProfile } from "@/app/(dashboard)/walker/actions"
+import { formatRut, validateRut } from "@/lib/formatters"
 
-// Helper: RUT Validation
-function validateRut(rut: string): boolean {
-    // Clean format (remove dots)
-    const cleanRut = rut.replace(/\./g, '')
-    if (!/^[0-9]+-[0-9kK]{1}$/.test(cleanRut)) return false
-    const [num, dv] = cleanRut.split('-')
-    if (!num || !dv) return false
 
-    let M = 0, S = 1, T = parseInt(num)
-    for (; T; T = Math.floor(T / 10))
-        S = (S + T % 10 * (9 - M++ % 6)) % 11
-
-    const expectedDv = S ? S - 1 : 'k'
-    return expectedDv.toString() === dv.toLowerCase()
-}
 
 // Helper: Phone Validation
 function validatePhone(phone: string): boolean {
@@ -62,10 +49,19 @@ export default function WalkerOnboardingPage() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
-        setFormData({ ...formData, [name]: value })
+
+        if (name === 'rut') {
+            const formatted = formatRut(value)
+            setFormData(prev => ({ ...prev, [name]: formatted }))
+            // Clear errors on change
+            setErrors(prev => ({ ...prev, rut: "" }))
+            return
+        }
+
+        setFormData(prev => ({ ...prev, [name]: value }))
 
         // Clear errors on change
-        if (name === 'rut' || name === 'phone') {
+        if (name === 'phone') {
             setErrors(prev => ({ ...prev, [name]: "" }))
         }
     }

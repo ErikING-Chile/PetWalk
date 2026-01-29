@@ -104,21 +104,63 @@ export default function WalkerOnboardingPage() {
     const handleSubmit = async () => {
         setIsSubmitting(true)
         try {
+            // 1. Upload Files Client-Side (to bypass Vercel 4.5MB limit)
+            const uploadFile = async (file: File, bucket: string, pathPrefix: string) => {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) throw new Error("No user found")
+
+                const fileExt = file.name.split('.').pop()
+                const fileName = `${pathPrefix}/${user.id}_${Date.now()}.${fileExt}`
+
+                const { data, error } = await supabase.storage
+                    .from(bucket)
+                    .upload(fileName, file, { upsert: true })
+
+                if (error) throw error
+
+                // Return URL or Path depending on bucket
+                if (bucket === 'walker-photos') {
+                    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(fileName)
+                    return publicUrl
+                } else {
+                    return fileName // Path for private buckets
+                }
+            }
+
+            const fileUrls: any = {}
+
+            // Upload Profile Photo
+            if (files.profile_photo) {
+                fileUrls.profile_photo_url = await uploadFile(files.profile_photo, 'walker-photos', 'profiles')
+            }
+
+            // Upload Documents
+            if (files.id_front) fileUrls.id_front = await uploadFile(files.id_front, 'walker-documents', 'id_cards')
+            if (files.id_back) fileUrls.id_back = await uploadFile(files.id_back, 'walker-documents', 'id_cards')
+            if (files.criminal_record) fileUrls.criminal_record = await uploadFile(files.criminal_record, 'walker-documents', 'certificates')
+            if (files.residence_cert) fileUrls.residence_cert = await uploadFile(files.residence_cert, 'walker-documents', 'certificates')
+
+            // 2. Send Data to Server Action
             const data = new FormData()
             data.append('full_name', `${formData.first_name} ${formData.last_name}`.trim())
-            data.append('run', formData.rut) // Action uses 'run'
-            // Add +56 prefix
+            data.append('run', formData.rut)
             data.append('phone', `+56${formData.phone}`)
             data.append('address', formData.address)
             data.append('description', formData.description)
 
-            if (files.profile_photo) data.append('profile_photo', files.profile_photo)
-            if (files.id_front) data.append('document_id_front', files.id_front)
-            if (files.id_back) data.append('document_id_back', files.id_back)
-            if (files.criminal_record) data.append('certificate_background', files.criminal_record)
-            if (files.residence_cert) data.append('certificate_residence', files.residence_cert)
+            // Append URLs/Paths instead of Files
+            if (fileUrls.profile_photo_url) data.append('profile_photo_path', fileUrls.profile_photo_url)
+            if (fileUrls.id_front) data.append('id_front_path', fileUrls.id_front)
+            if (fileUrls.id_back) data.append('id_back_path', fileUrls.id_back)
+            if (fileUrls.criminal_record) data.append('criminal_record_path', fileUrls.criminal_record)
+            if (fileUrls.residence_cert) data.append('residence_cert_path', fileUrls.residence_cert)
+
+            const timer = setTimeout(() => {
+                throw new Error("Timeout: La solicitud está tardando demasiado. Verifica tu conexión.")
+            }, 25000)
 
             const result = await updateWalkerProfile(data)
+            clearTimeout(timer)
 
             if (result?.error) {
                 console.error(result.error)
@@ -127,9 +169,9 @@ export default function WalkerOnboardingPage() {
                 router.push('/walker/profile')
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error)
-            alert("Error inesperado al enviar la solicitud.")
+            alert(`Error al subir archivos o guardar: ${error?.message || JSON.stringify(error)}`)
         } finally {
             setIsSubmitting(false)
         }

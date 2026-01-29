@@ -194,12 +194,12 @@ export async function updateWalkerProfile(formData: FormData) {
     const address = formData.get('address') as string
     const description = formData.get('description') as string
 
-    // File Fields
-    const photo = formData.get('profile_photo') as File
-    const idFront = formData.get('document_id_front') as File
-    const idBack = formData.get('document_id_back') as File
-    const certBackground = formData.get('certificate_background') as File
-    const certResidence = formData.get('certificate_residence') as File
+    // URL/Path Fields (from Client Upload)
+    const profile_photo_path = formData.get('profile_photo_path') as string
+    const id_front_path = formData.get('id_front_path') as string
+    const id_back_path = formData.get('id_back_path') as string
+    const criminal_record_path = formData.get('criminal_record_path') as string
+    const residence_cert_path = formData.get('residence_cert_path') as string
 
     // Validate fields
     if (run && !validateRun(run)) {
@@ -220,80 +220,33 @@ export async function updateWalkerProfile(formData: FormData) {
     if (full_name) profileUpdates.full_name = full_name
     if (run) profileUpdates.rut = formatRun(run) // Map run -> rut
     if (phone) profileUpdates.phone = phone
-    // avatar_url will be updated after upload
+
+    // Update Avatar if path provided
+    if (profile_photo_path) {
+        profileUpdates.avatar_url = profile_photo_path
+        updates.profile_photo_url = profile_photo_path
+    }
 
     if (Object.keys(profileUpdates).length > 0) {
-        // Use admin client for profiles too just to be safe, though user owns it.
         await adminSupabase.from('profiles').update(profileUpdates).eq('id', user.id)
     }
 
-    // Helper to upload file
-    const uploadFile = async (file: File, bucket: string, pathPrefix: string) => {
-        if (!file || file.size === 0) return null
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${pathPrefix}/${user.id}_${Date.now()}.${fileExt}`
-
-        const { error, data } = await adminSupabase.storage
-            .from(bucket)
-            .upload(fileName, file, { upsert: true })
-
-        if (error) {
-            console.error(`Upload error ${bucket}:`, error)
-            return null
-        }
-
-        // Return appropriate URL
-        if (bucket === 'walker-photos') {
-            const { data: { publicUrl } } = adminSupabase.storage.from(bucket).getPublicUrl(fileName)
-            return publicUrl
-        } else {
-            return fileName
-        }
+    // Assign Document Paths directly
+    if (id_front_path) {
+        updates.id_front_url = id_front_path
+        updates.document_id_front_url = id_front_path
     }
-
-    // 1. Upload Profile Photo (Public) - NOTE: logic below handles file uploads and adds to 'updates' for walker_profiles
-    // We need to be careful. profile_photo_url is in profiles? or walker_profiles?
-    // walker_profiles doesn't have profile_photo_url in the schema view I saw?
-    // Wait, let's check schema again. walker_profiles Row doesn't show profile_photo_url?
-    // Schema said: id_front_url, id_back_url, criminal_record_url, residence_cert_url.
-    // profiles has avatar_url.
-    // walker_profiles has rating_avg, etc.
-    // The previous code had: if (photoUrl) updates.profile_photo_url = photoUrl
-    // This implies walker_profiles HAS profile_photo_url.
-    // BUT the schema dump in Step 603 line 45-61 DOES NOT SHOW profile_photo_url.
-    // It shows: user_id, status, communes, ..., address, description, documents_status, id_front_url, ...
-    // So profile_photo_url UPDATE WILL FAIL on walker_profiles too.
-    // It should go to 'profiles.avatar_url'.
-
-    const photoUrl = await uploadFile(photo, 'walker-photos', 'profiles')
-    if (photoUrl) {
-        await adminSupabase.from('profiles').update({ avatar_url: photoUrl }).eq('id', user.id)
-        updates.profile_photo_url = photoUrl
+    if (id_back_path) {
+        updates.id_back_url = id_back_path
+        updates.document_id_back_url = id_back_path
     }
-
-    // 2. Upload Documents (Private)
-    const idFrontPath = await uploadFile(idFront, 'walker-documents', 'id_cards')
-    if (idFrontPath) {
-        updates.id_front_url = idFrontPath
-        updates.document_id_front_url = idFrontPath // Redundant but safe
+    if (criminal_record_path) {
+        updates.criminal_record_url = criminal_record_path
+        updates.certificate_background_url = criminal_record_path
     }
-
-    const idBackPath = await uploadFile(idBack, 'walker-documents', 'id_cards')
-    if (idBackPath) {
-        updates.id_back_url = idBackPath
-        updates.document_id_back_url = idBackPath // Redundant but safe
-    }
-
-    const backgroundPath = await uploadFile(certBackground, 'walker-documents', 'certificates')
-    if (backgroundPath) {
-        updates.criminal_record_url = backgroundPath
-        updates.certificate_background_url = backgroundPath // Redundant but safe
-    }
-
-    const residencePath = await uploadFile(certResidence, 'walker-documents', 'certificates')
-    if (residencePath) {
-        updates.residence_cert_url = residencePath
-        updates.certificate_residence_url = residencePath // Redundant but safe
+    if (residence_cert_path) {
+        updates.residence_cert_url = residence_cert_path
+        updates.certificate_residence_url = residence_cert_path
     }
 
     // Update DB (Use Admin Client to bypass RLS if needed)

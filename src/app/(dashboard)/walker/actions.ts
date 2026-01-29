@@ -268,20 +268,33 @@ export async function updateWalkerProfile(formData: FormData) {
     const photoUrl = await uploadFile(photo, 'walker-photos', 'profiles')
     if (photoUrl) {
         await adminSupabase.from('profiles').update({ avatar_url: photoUrl }).eq('id', user.id)
+        updates.profile_photo_url = photoUrl
     }
 
     // 2. Upload Documents (Private)
     const idFrontPath = await uploadFile(idFront, 'walker-documents', 'id_cards')
-    if (idFrontPath) updates.id_front_url = idFrontPath // Schema uses id_front_url, NOT document_id_front_url
+    if (idFrontPath) {
+        updates.id_front_url = idFrontPath
+        updates.document_id_front_url = idFrontPath // Redundant but safe
+    }
 
     const idBackPath = await uploadFile(idBack, 'walker-documents', 'id_cards')
-    if (idBackPath) updates.id_back_url = idBackPath // Schema uses id_back_url
+    if (idBackPath) {
+        updates.id_back_url = idBackPath
+        updates.document_id_back_url = idBackPath // Redundant but safe
+    }
 
     const backgroundPath = await uploadFile(certBackground, 'walker-documents', 'certificates')
-    if (backgroundPath) updates.criminal_record_url = backgroundPath // Schema uses criminal_record_url
+    if (backgroundPath) {
+        updates.criminal_record_url = backgroundPath
+        updates.certificate_background_url = backgroundPath // Redundant but safe
+    }
 
     const residencePath = await uploadFile(certResidence, 'walker-documents', 'certificates')
-    if (residencePath) updates.residence_cert_url = residencePath // Schema uses residence_cert_url
+    if (residencePath) {
+        updates.residence_cert_url = residencePath
+        updates.certificate_residence_url = residencePath // Redundant but safe
+    }
 
     // Update DB (Use Admin Client to bypass RLS if needed)
     // Use upsert to ensure row exists

@@ -17,7 +17,8 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
 
     // Form State
     const [formData, setFormData] = useState({
-        full_name: initialData?.full_name || "",
+        first_name: initialData?.full_name ? initialData.full_name.split(' ')[0] : "",
+        last_name: initialData?.full_name ? initialData.full_name.split(' ').slice(1).join(' ') : "",
         phone: initialData?.phone ? initialData.phone.replace('+56', '') : "", // Strip +56 for display if existing
         address: initialData?.address || "",
         commune: initialData?.commune || "",
@@ -28,9 +29,12 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
     // Update state when initialData changes (e.g. after fetch)
     useEffect(() => {
         if (initialData) {
+            const first = initialData.full_name ? initialData.full_name.split(' ')[0] : ""
+            const last = initialData.full_name ? initialData.full_name.split(' ').slice(1).join(' ') : ""
             setFormData(prev => ({
                 ...prev,
-                full_name: initialData.full_name || prev.full_name,
+                first_name: first || prev.first_name,
+                last_name: last || prev.last_name,
                 phone: initialData.phone ? initialData.phone.replace('+56', '') : prev.phone,
                 address: initialData.address || prev.address,
                 commune: initialData.commune || prev.commune,
@@ -128,7 +132,7 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
             const { error } = await supabase
                 .from('profiles')
                 .update({
-                    full_name: formData.full_name,
+                    full_name: `${formData.first_name} ${formData.last_name}`.trim(),
                     phone: formattedPhone,
                     address: formData.address,
                     commune: formData.commune,
@@ -196,15 +200,30 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
             <Card variant="glass" className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">Nombre Completo</label>
+                        <label className="text-sm font-medium text-gray-300">Nombres</label>
                         <div className="relative">
                             <User className="absolute left-3 top-3 text-gray-500" size={18} />
                             <input
-                                name="full_name"
-                                value={formData.full_name}
+                                name="first_name"
+                                value={formData.first_name}
                                 onChange={handleInputChange}
                                 className="glass-input !pl-10 w-full"
-                                placeholder="Juan Pérez"
+                                placeholder="Juan Pablo"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-300">Apellidos</label>
+                        <div className="relative">
+                            <User className="absolute left-3 top-3 text-gray-500" size={18} />
+                            <input
+                                name="last_name"
+                                value={formData.last_name}
+                                onChange={handleInputChange}
+                                className="glass-input !pl-10 w-full"
+                                placeholder="Pérez González"
                                 required
                             />
                         </div>
@@ -276,7 +295,7 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
                         </div>
                     </div>
                 </div>
-            </Card>
+            </Card >
 
             <button
                 type="submit"
@@ -292,6 +311,6 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
                     </>
                 )}
             </button>
-        </form>
+        </form >
     )
 }

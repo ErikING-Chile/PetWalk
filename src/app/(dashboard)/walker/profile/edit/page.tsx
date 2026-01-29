@@ -14,6 +14,17 @@ export default function EditWalkerProfilePage() {
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true)
+
+        // Transform Data
+        const firstName = formData.get('first_name')?.toString() || ''
+        const lastName = formData.get('last_name')?.toString() || ''
+        formData.set('full_name', `${firstName} ${lastName}`.trim())
+
+        // Handle Phone
+        const phone = formData.get('phone')?.toString() || ''
+        const cleanPhone = phone.replace(/\D/g, '')
+        formData.set('phone', `+56${cleanPhone}`)
+
         const result = await updateWalkerProfile(formData)
         setIsLoading(false)
 
@@ -50,9 +61,15 @@ export default function EditWalkerProfilePage() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm text-gray-300">Nombre Completo</label>
-                            <input name="full_name" className="glass-input w-full" placeholder="Juan Pérez" required />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm text-gray-300">Nombres</label>
+                                <input name="first_name" className="glass-input w-full" placeholder="Juan Pablo" required />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm text-gray-300">Apellidos</label>
+                                <input name="last_name" className="glass-input w-full" placeholder="Pérez González" required />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -81,26 +98,33 @@ export default function EditWalkerProfilePage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm text-gray-300">Teléfono</label>
-                                <input
-                                    name="phone"
-                                    className="glass-input w-full"
-                                    placeholder="+56 9 1234 5678"
-                                    required
-                                    defaultValue="+56 9 "
-                                    onChange={(e) => {
-                                        if (!e.target.value.startsWith('+56 9 ')) {
-                                            e.target.value = '+56 9 '
-                                        }
-                                        if (!validatePhone(e.target.value)) {
-                                            setErrors(prev => ({ ...prev, phone: "Formato inválido (Debe ser +56 9 ... y 8 dígitos)" }))
-                                        } else {
-                                            setErrors(prev => {
-                                                const { phone, ...rest } = prev
-                                                return rest
-                                            })
-                                        }
-                                    }}
-                                />
+                                <div className="relative">
+                                    <div className="absolute left-3 top-0 bottom-0 flex items-center pointer-events-none">
+                                        <span className="text-gray-400 text-sm font-medium">+56</span>
+                                    </div>
+                                    <input
+                                        name="phone"
+                                        type="tel"
+                                        className="glass-input !pl-12 w-full"
+                                        placeholder="9 1234 5678"
+                                        required
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '')
+                                            // Only validate if we have enough digits e.g. 9
+                                            if (val.length >= 8) {
+                                                const fullPhone = `+56${val}`
+                                                if (!validatePhone(fullPhone)) {
+                                                    setErrors(prev => ({ ...prev, phone: "Formato inválido (Ej: 9 1234 5678)" }))
+                                                } else {
+                                                    setErrors(prev => {
+                                                        const { phone, ...rest } = prev
+                                                        return rest
+                                                    })
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
                                 {errors.phone && <p className="text-red-400 text-xs">{errors.phone}</p>}
                             </div>
                         </div>

@@ -31,11 +31,11 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
         <div className="flex flex-col min-h-screen bg-black pb-20">
             <div className="p-4 bg-gradient-to-b from-gray-900 to-black z-10 sticky top-0">
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                    {booking.status === 'assigned' ? 'Paseador en Camino' : 'Seguimiento en Vivo'}
+                    {booking.status === 'assigned' ? 'Walker en Camino' : 'Seguimiento en Vivo'}
                 </h1>
                 <p className="text-gray-400 text-sm flex items-center gap-2 mb-4">
                     <MapPin className="w-4 h-4 text-purple-400" />
-                    {booking.status === 'assigned' ? 'Tu paseador viene hacia ti' : 'Paseando a tu mascota'}
+                    {booking.status === 'assigned' ? 'Tu walker viene hacia ti' : 'Paseando a tu mascota'}
                 </p>
 
                 {/* Verification Code Display */}
@@ -43,7 +43,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
                     <div className="bg-gradient-to-r from-pink-500/20 to-purple-600/20 border border-purple-500/30 rounded-xl p-4 text-center animate-pulse">
                         <p className="text-xs text-uppercase text-purple-300 font-bold mb-1 tracking-wider">CÓDIGO DE INICIO</p>
                         <p className="text-4xl font-mono font-bold text-white tracking-[0.5em]">{booking.start_verification_code}</p>
-                        <p className="text-[10px] text-gray-400 mt-2">Dicta este código al paseador cuando llegue.</p>
+                        <p className="text-[10px] text-gray-400 mt-2">Dicta este código al walker cuando llegue.</p>
                     </div>
                 )}
             </div>
@@ -60,7 +60,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
                             {booking.status === 'in_progress' ? 'EN CURSO' : 'ASIGNADO'}
                         </span>
                     </div>
-                    <p className="text-xs text-white opacity-90 font-medium">{booking.walker?.full_name || 'Paseador'}</p>
+                    <p className="text-xs text-white opacity-90 font-medium">{booking.walker?.full_name || 'Walker'}</p>
                 </div>
             </div>
 
@@ -68,7 +68,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
             <div className="p-4 space-y-4 bg-black flex-1">
 
                 {/* Cancellation / Termination Options */}
-                <CancellationControls bookingId={id} status={booking.status} />
+                <CancellationControls bookingId={id} status={booking.status} walkerId={booking.walker_id} />
 
                 {/* Rating if Cancelled by Walker */}
                 {booking.status === 'cancelled' && booking.cancelled_by === 'walker' && (
@@ -78,7 +78,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
                 {booking.walker?.phone ? (
                     <a href={`tel:${booking.walker.phone}`} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95">
                         <Phone size={20} />
-                        Llamar al Paseador ({booking.walker.phone})
+                        Llamar al Walker ({booking.walker.phone})
                     </a>
                 ) : (
                     <button disabled className="w-full bg-gray-700 text-gray-400 py-3 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed">

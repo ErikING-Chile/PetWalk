@@ -173,6 +173,47 @@ export interface Database {
                     created_at?: string
                 }
             }
+            payment_methods: {
+                Row: {
+                    id: string
+                    user_id: string
+                    card_type: 'credit' | 'debit'
+                    card_brand: string
+                    last_four: string
+                    expiry_month: number
+                    expiry_year: number
+                    cardholder_name: string
+                    is_default: boolean
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    card_type: 'credit' | 'debit'
+                    card_brand: string
+                    last_four: string
+                    expiry_month: number
+                    expiry_year: number
+                    cardholder_name: string
+                    is_default?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    card_type?: 'credit' | 'debit'
+                    card_brand?: string
+                    last_four?: string
+                    expiry_month?: number
+                    expiry_year?: number
+                    cardholder_name?: string
+                    is_default?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
         }
         Views: {
             [_ in never]: never

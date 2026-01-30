@@ -37,7 +37,7 @@ export default function EditWalkerProfilePage() {
 
     return (
         <div className="space-y-6 pb-20">
-            <h1 className="text-2xl font-bold text-white">Completar Perfil Paseador</h1>
+            <h1 className="text-2xl font-bold text-white">Completar Perfil Walker</h1>
 
             <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex gap-3 text-yellow-200 text-sm">
                 <AlertCircle className="shrink-0" />

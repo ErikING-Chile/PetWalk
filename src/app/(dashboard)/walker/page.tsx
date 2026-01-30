@@ -9,7 +9,7 @@ export default async function WalkerDashboard() {
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-600">
-                Panel de Paseador
+                Panel de Walker
             </h1>
 
             <div className="space-y-4">

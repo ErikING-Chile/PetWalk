@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { calculateDistance } from '@/utils/distance'
+import { getMultipleWalkersActiveWalks } from '@/utils/walker-availability'
 
 export async function getWalkers() {
     const supabase = await createClient()
@@ -29,6 +30,10 @@ export async function getWalkers() {
     const clientLat = -33.4372
     const clientLon = -70.6342
 
+    // Get active walks count for all walkers
+    const walkerIds = walkers?.map(w => w.user_id) || []
+    const activeWalksCounts = await getMultipleWalkersActiveWalks(walkerIds)
+
     const walkersWithLoc = walkers?.map(w => {
         // Random location within ~5km
         // 0.04 degrees is roughly 4-5km
@@ -41,7 +46,8 @@ export async function getWalkers() {
             ...w,
             lat,
             lon,
-            distance
+            distance,
+            active_walks_count: activeWalksCounts[w.user_id] || 0
         }
     })
 

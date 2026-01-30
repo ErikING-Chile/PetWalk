@@ -85,7 +85,7 @@ export async function cancelWalkByWalker(bookingId: string, reason: string) {
     const { error } = await supabase.from('walk_bookings')
         .update({
             status: 'cancelled',
-            notes: `Cancelado por paseador: ${reason}`,
+            notes: `Cancelado por walker: ${reason}`,
             cancelled_by: 'walker'
         })
         .eq('id', bookingId)

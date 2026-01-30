@@ -32,9 +32,9 @@ export function RatingForm({ bookingId }: { bookingId: string }) {
 
     return (
         <div className="bg-gray-900 border border-white/10 rounded-xl p-6 shadow-xl">
-            <h3 className="text-white font-bold text-lg mb-2 text-center">Calificar Paseador</h3>
+            <h3 className="text-white font-bold text-lg mb-2 text-center">Calificar Walker</h3>
             <p className="text-center text-sm text-gray-400 mb-6">
-                Este paseo fue cancelado por el paseador. ¿Cómo calificarías su servicio previo o comunicación?
+                Este paseo fue cancelado por el walker. ¿Cómo calificarías su servicio previo o comunicación?
             </p>
 
             <div className="flex justify-center gap-2 mb-6">
@@ -47,8 +47,8 @@ export function RatingForm({ bookingId }: { bookingId: string }) {
                         <Star
                             size={32}
                             className={`${star <= rating
-                                    ? "text-yellow-400 fill-yellow-400 border-yellow-400"
-                                    : "text-gray-600 hover:text-gray-500"
+                                ? "text-yellow-400 fill-yellow-400 border-yellow-400"
+                                : "text-gray-600 hover:text-gray-500"
                                 } transition-colors`}
                         />
                     </button>

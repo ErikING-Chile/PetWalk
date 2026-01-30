@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card"
-import { Dog, MapPin, Clock, Calendar, ChevronRight, ShoppingBag } from "lucide-react"
+import { Dog, MapPin, Clock, Calendar, ChevronRight, ShoppingBag, Plus, Wallet } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/utils/supabase/server"
 import { format, subDays, isSameDay } from "date-fns"
@@ -104,37 +104,43 @@ export default async function ClientDashboard() {
                 </div>
             </div>
 
-            {/* CTA Card */}
-            <Link href="/client/book">
-                <Card variant="interactive" className="bg-gradient-to-r from-purple-600 to-pink-600 border-none relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 blur-3xl rounded-full -mr-10 -mt-10" />
-                    <div className="relative z-10 flex items-center justify-between">
-                        <div>
-                            <h2 className="text-lg font-bold text-white">Agendar Nuevo Paseo</h2>
-                            <p className="text-purple-100 text-xs mt-1">Encuentra paseadores cerca de ti</p>
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-4">
+                <Link href="/client/book">
+                    <button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 flex flex-col items-center justify-center gap-2 group">
+                        <div className="flex items-center gap-2">
+                            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+                            <span className="text-base">Agendar Paseo</span>
                         </div>
-                        <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <Dog className="text-white" size={20} />
+                        <span className="text-xs text-purple-100 opacity-80">Encuentra walkers cerca</span>
+                    </button>
+                </Link>
+                <Link href="/client/marketplace">
+                    <button className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 flex flex-col items-center justify-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <ShoppingBag className="w-5 h-5" />
+                            <span className="text-base">Marketplace</span>
                         </div>
-                    </div>
-                </Card>
-            </Link>
+                        <span className="text-xs text-blue-100 opacity-80">Productos para mascotas</span>
+                    </button>
+                </Link>
+            </div>
 
-            {/* Marketplace Button - Added per request */}
-            <Link href="/client/marketplace">
-                <Card variant="interactive" className="bg-gradient-to-r from-blue-600 to-cyan-600 border-none relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 blur-3xl rounded-full -mr-10 -mt-10" />
-                    <div className="relative z-10 flex items-center justify-between">
-                        <div>
-                            <h2 className="text-lg font-bold text-white">Tienda PetWalk</h2>
-                            <p className="text-blue-100 text-xs mt-1">Accesorios, comida y más para tu mascota</p>
-                        </div>
-                        <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <ShoppingBag className="text-white" size={20} />
-                        </div>
-                    </div>
-                </Card>
-            </Link>
+            {/* Quick Links */}
+            <div className="flex gap-3">
+                <Link href="/client/payment-methods" className="flex-1">
+                    <button className="w-full bg-white/5 hover:bg-white/10 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-white/10">
+                        <Wallet className="w-4 h-4" />
+                        <span className="text-sm font-medium">Métodos de Pago</span>
+                    </button>
+                </Link>
+                <Link href="/client/pets" className="flex-1">
+                    <button className="w-full bg-white/5 hover:bg-white/10 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-white/10">
+                        <Dog className="w-4 h-4" />
+                        <span className="text-sm font-medium">Mis Mascotas</span>
+                    </button>
+                </Link>
+            </div>
 
             {/* DEBUG SECTION REMOVED */}
 
@@ -165,7 +171,7 @@ export default async function ClientDashboard() {
                                     <h4 className="font-bold text-white">{nextWalk.pet?.name || 'Mascota'}</h4>
                                     <div className="flex items-center text-xs text-purple-300 gap-1">
                                         {/* @ts-ignore */}
-                                        <span>Con {nextWalk.walker?.profiles?.full_name || 'Un Paseador'}</span>
+                                        <span>Con {nextWalk.walker?.profiles?.full_name || 'Un Walker'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -174,7 +180,7 @@ export default async function ClientDashboard() {
                                     'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'
                                 }`}>
                                 {nextWalk.status === 'requested' ? 'Buscando...' :
-                                    nextWalk.status === 'assigned' ? 'Paseador Asignado' :
+                                    nextWalk.status === 'assigned' ? 'Walker Asignado' :
                                         nextWalk.status === 'in_progress' ? 'En Curso' : nextWalk.status}
                             </span>
                         </div>
@@ -184,7 +190,7 @@ export default async function ClientDashboard() {
                         {nextWalk.start_code && nextWalk.status !== 'in_progress' && (
                             <div className="mt-4 p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 flex flex-col items-center justify-center text-center animate-pulse">
                                 <p className="text-xs text-blue-300 font-bold uppercase tracking-widest mb-2">
-                                    {nextWalk.status === 'assigned' ? '¡Tu paseador viene en camino!' : 'Código de Inicio'}
+                                    {nextWalk.status === 'assigned' ? '¡Tu walker viene en camino!' : 'Código de Inicio'}
                                 </p>
                                 <p className="text-[10px] text-gray-400 mb-1">Entrégale este código para comenzar:</p>
                                 {/* @ts-ignore */}
@@ -200,7 +206,7 @@ export default async function ClientDashboard() {
                                     : "bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
                                     }`}>
                                     <MapPin size={18} />
-                                    {nextWalk.status === 'in_progress' ? "VER MAPA EN VIVO" : "VER PASEADOR Y CHAT"}
+                                    {nextWalk.status === 'in_progress' ? "VER MAPA EN VIVO" : "VER WALKER Y CHAT"}
                                 </div>
                             </Link>
                         )}

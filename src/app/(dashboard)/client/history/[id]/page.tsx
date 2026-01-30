@@ -49,7 +49,7 @@ export default async function WalkSummaryPage({ params }: { params: Promise<{ id
                     {booking.walker?.full_name?.[0] || 'W'}
                 </div>
                 <div>
-                    <h3 className="font-bold text-white">{booking.walker?.full_name || 'Paseador'}</h3>
+                    <h3 className="font-bold text-white">{booking.walker?.full_name || 'Walker'}</h3>
                     <p className="text-xs text-gray-400">Paseo completado con éxito</p>
                 </div>
             </Card>

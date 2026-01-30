@@ -103,7 +103,7 @@ export default function CreatePetPage() {
                             </div>
                         </div>
                         <div className="flex-1">
-                            <p className="text-sm text-gray-400 mb-2">Sube una foto linda para que el paseador la reconozca.</p>
+                            <p className="text-sm text-gray-400 mb-2">Sube una foto linda para que el walker la reconozca.</p>
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}

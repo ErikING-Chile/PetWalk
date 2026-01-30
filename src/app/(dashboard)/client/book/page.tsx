@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { getWalkers, createBooking } from "./actions"
 import { getMyPets } from "./pet-loader"
+import { getDefaultPaymentMethod, type PaymentMethod } from "../payment-methods/actions"
 import { Calendar, Clock, MapPin, Check, User, Dog } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -11,6 +12,7 @@ export default function BookingPage() {
     const [step, setStep] = useState(1)
     const [pets, setPets] = useState<any[]>([])
     const [walkers, setWalkers] = useState<any[]>([])
+    const [defaultPayment, setDefaultPayment] = useState<PaymentMethod | null>(null)
 
     // Form State
     const [selectedPet, setSelectedPet] = useState("")
@@ -18,12 +20,19 @@ export default function BookingPage() {
     const [time, setTime] = useState("")
     const [duration, setDuration] = useState(30)
     const [selectedWalker, setSelectedWalker] = useState("")
-    const [paymentMethod, setPaymentMethod] = useState<'credit' | 'transfer' | null>(null)
     const [isProcessing, setIsProcessing] = useState(false)
 
     useEffect(() => {
         getMyPets().then(setPets)
         getWalkers().then(setWalkers)
+        getDefaultPaymentMethod().then(setDefaultPayment)
+
+        // Set default date to today
+        const today = new Date()
+        const year = today.getFullYear()
+        const month = String(today.getMonth() + 1).padStart(2, '0')
+        const day = String(today.getDate()).padStart(2, '0')
+        setDate(`${year}-${month}-${day}`)
     }, [])
 
     const handleNext = () => setStep(s => s + 1)
@@ -31,21 +40,21 @@ export default function BookingPage() {
 
     const price = duration === 30 ? 5000 : duration === 60 ? 9000 : 15000
 
-    const handlePayment = async () => {
+    const handleConfirmBooking = async () => {
+        if (!defaultPayment) {
+            alert('Por favor agrega un método de pago en tu perfil antes de reservar')
+            return
+        }
+
         setIsProcessing(true)
-        // Simulate delay
+        // Simulate payment processing delay
         await new Promise(resolve => setTimeout(resolve, 2000))
 
-        // Use the native form submission via requestSubmit or calling action directly
-        // We'll call the server action via a hidden form submission or ref logic
-        // For simplicity in this structure: element.submit() on the form
         const form = document.getElementById('booking-form') as HTMLFormElement
         if (form) {
-            // Append payment info to FormData not easily possible without hidden inputs
-            // Let's just rely on the hidden inputs we have and assume 'credit' for simplicity or add a hidden input
-            // But we can trigger the action directly if we weren't using the form action attribute
             form.requestSubmit()
         }
+        setIsProcessing(false)
     }
 
     return (
@@ -60,8 +69,7 @@ export default function BookingPage() {
             <h1 className="text-2xl font-bold text-white mb-6">
                 {step === 1 && "Selecciona tu Mascota"}
                 {step === 2 && "¿Cuándo paseamos?"}
-                {step === 3 && "Elige un Paseador"}
-                {step === 4 && "Confirma tu Reserva"}
+                {step === 3 && "Elige un Walker"}
             </h1>
 
             <form action={createBooking} id="booking-form">
@@ -154,7 +162,7 @@ export default function BookingPage() {
                                 * Programar con al menos 1 hora de anticipación.
                             </p>
                             <p className="text-xs text-gray-400">
-                                * Disponibilidad de paseadores: Todo el día (08:00 - 20:00).
+                                * Disponibilidad de walkers: Todo el día (08:00 - 20:00).
                             </p>
                         </div>
                         <div className="space-y-2">
@@ -191,7 +199,7 @@ export default function BookingPage() {
                                 if (selectedDateTime < oneHourFromNow) {
                                     return (
                                         <div className="p-3 rounded-lg bg-yellow-500/20 border border-yellow-500/30 text-yellow-200 text-xs">
-                                            ⚠️ <strong>Reserva Inmediata:</strong> Solo se mostrarán paseadores cercanos (3 km).
+                                            ⚠️ <strong>Reserva Inmediata:</strong> Solo se mostrarán walkers cercanos (3 km).
                                         </div>
                                     )
                                 }
@@ -232,7 +240,7 @@ export default function BookingPage() {
                             if (filteredWalkers.length === 0) {
                                 return (
                                     <div className="p-4 rounded-xl bg-red-500/10 text-red-200 text-sm border border-red-500/20">
-                                        No hay paseadores disponibles {isImmediate ? 'cerca de ti (< 3km) para servicio inmediato.' : 'para esta fecha.'}
+                                        No hay walkers disponibles {isImmediate ? 'cerca de ti (< 3km) para servicio inmediato.' : 'para esta fecha.'}
                                         {isImmediate && <p className="mt-2 text-xs opacity-70">Intenta programar con más de 1 hora de anticipación para ver más opciones.</p>}
                                     </div>
                                 )
@@ -251,12 +259,17 @@ export default function BookingPage() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <h3 className="font-bold text-white truncate">
-                                                {(Array.isArray(w.profiles) ? w.profiles[0]?.full_name : w.profiles?.full_name) || 'Paseador'}
+                                                {(Array.isArray(w.profiles) ? w.profiles[0]?.full_name : w.profiles?.full_name) || 'Walker'}
                                             </h3>
                                             {typeof w.distance === 'number' && (
                                                 <span className={cn("text-xs px-2 py-0.5 rounded-full flex items-center gap-1", w.distance <= 3 ? "bg-green-500/20 text-green-300" : "bg-white/10 text-gray-400")}>
                                                     <MapPin className="w-3 h-3" />
                                                     {w.distance.toFixed(1)} km
+                                                </span>
+                                            )}
+                                            {w.active_walks_count > 0 && (
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300">
+                                                    🚶 {w.active_walks_count} activo{w.active_walks_count > 1 ? 's' : ''}
                                                 </span>
                                             )}
                                         </div>
@@ -275,86 +288,65 @@ export default function BookingPage() {
                         })()}
                         {walkers.length === 0 && (
                             <div className="p-4 rounded-xl bg-yellow-500/10 text-yellow-200 text-sm">
-                                No hay paseadores disponibles. (Crea una cuenta paseador y apruébala en DB para probar)
+                                No hay walkers disponibles. (Crea una cuenta walker y apruébala en DB para probar)
                                 <br />
                                 <span className="opacity-50 text-xs text-white block mt-2">
-                                    *Para MVP One-Shot, puedes registrarte como otro usuario Paseador.
+                                    *Para MVP One-Shot, puedes registrarte como otro usuario Walker.
                                 </span>
                             </div>
                         )}
-                        <button
-                            type="button"
-                            disabled={!selectedWalker}
-                            onClick={handleNext}
-                            className="btn-primary w-full mt-4 disabled:opacity-50"
-                        >
-                            Continuar
-                        </button>
-                    </div>
-                )}
-
-                {/* STEP 4: CONFIRMATION */}
-                {step === 4 && (
-                    <div className="space-y-6">
-                        <Card variant="glass" className="space-y-4">
-                            <div className="flex justify-between items-center text-sm border-b border-white/10 pb-2">
-                                <span className="text-gray-400">Servicio</span>
-                                <span className="font-bold text-white">Paseo {duration} min</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm border-b border-white/10 pb-2">
-                                <span className="text-gray-400">Fecha</span>
-                                <span className="font-bold text-white">{date} a las {time}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xl font-bold pt-2">
-                                <span className="text-white">Total</span>
-                                <span className="text-purple-400">${price.toLocaleString()}</span>
-                            </div>
-                        </Card>
-
-                        {/* MOCK PAYMENT SELECTOR */}
-                        <div className="space-y-3">
-                            <label className="text-sm text-gray-300">Método de Pago (Simulación)</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setPaymentMethod('credit')}
-                                    className={cn("p-4 rounded-xl border flex flex-col items-center gap-2 transition-all", paymentMethod === 'credit' ? "bg-purple-500/20 border-purple-500 text-purple-200" : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10")}
-                                >
-                                    <div className="w-8 h-5 rounded bg-gradient-to-tr from-gray-400 to-gray-600 shadow-sm" />
-                                    <span className="text-xs font-bold">Crédito / Débito</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setPaymentMethod('transfer')}
-                                    className={cn("p-4 rounded-xl border flex flex-col items-center gap-2 transition-all", paymentMethod === 'transfer' ? "bg-purple-500/20 border-purple-500 text-purple-200" : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10")}
-                                >
-                                    <div className="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center text-[10px] font-bold">
-                                        $
-                                    </div>
-                                    <span className="text-xs font-bold">Transferencia</span>
-                                </button>
-                            </div>
-                        </div>
+                        {/* Confirmation Card */}
+                        {selectedWalker && (
+                            <Card variant="glass" className="space-y-4 mt-6">
+                                <h3 className="font-bold text-white text-lg">Resumen de Reserva</h3>
+                                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-2">
+                                    <span className="text-gray-400">Servicio</span>
+                                    <span className="font-bold text-white">Paseo {duration} min</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-2">
+                                    <span className="text-gray-400">Fecha</span>
+                                    <span className="font-bold text-white">{date} a las {time}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm border-b border-white/10 pb-2">
+                                    <span className="text-gray-400">Método de Pago</span>
+                                    {defaultPayment ? (
+                                        <span className="font-bold text-white capitalize">
+                                            {defaultPayment.card_brand} •••• {defaultPayment.last_four}
+                                        </span>
+                                    ) : (
+                                        <a href="/client/payment-methods" className="text-xs text-purple-400 hover:underline">
+                                            Agregar método de pago
+                                        </a>
+                                    )}
+                                </div>
+                                <div className="flex justify-between items-center text-xl font-bold pt-2">
+                                    <span className="text-white">Total</span>
+                                    <span className="text-purple-400">${price.toLocaleString()}</span>
+                                </div>
+                            </Card>
+                        )}
 
                         {/* PROCESSING OVERLAY */}
                         {isProcessing && (
                             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
                                 <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
-                                <p className="text-white font-bold animate-pulse">Procesando Pago Seguro...</p>
-                                <p className="text-sm text-gray-400 mt-2">Conectando con banco simulado...</p>
+                                <p className="text-white font-bold animate-pulse">Procesando Reserva...</p>
+                                <p className="text-sm text-gray-400 mt-2">Confirmando con walker...</p>
                             </div>
                         )}
 
                         <button
-                            type="button" // Changed to button to handle click manually
-                            onClick={handlePayment}
-                            disabled={!paymentMethod || isProcessing}
-                            className="btn-primary w-full text-lg shadow-xl shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                            type="button"
+                            disabled={!selectedWalker || !defaultPayment || isProcessing}
+                            onClick={handleConfirmBooking}
+                            className="btn-primary w-full mt-4 text-lg shadow-xl shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isProcessing ? 'Procesando...' : `Pagar $${price.toLocaleString()}`}
+                            {isProcessing ? 'Procesando...' : `Confirmar y Pagar $${price.toLocaleString()}`}
                         </button>
                     </div>
                 )}
+
+
             </form>
 
             {/* Back Button */}

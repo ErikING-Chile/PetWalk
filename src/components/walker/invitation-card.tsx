@@ -175,7 +175,7 @@ export function WalkerInvitationCard({ booking }: { booking: Booking }) {
                             className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold py-2 rounded-lg transition-colors border border-red-500/20 flex items-center justify-center gap-2"
                         >
                             <X size={16} />
-                            Cancelar Paseo (Paseador)
+                            Cancelar Paseo (Walker)
                         </button>
                     </div>
                 )}

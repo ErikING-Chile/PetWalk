@@ -42,7 +42,7 @@ export function RoleSelector({ selectedRole, onSelect }: RoleSelectorProps) {
                 <div className="bg-pink-500/20 p-4 rounded-full mb-3">
                     <User className="w-8 h-8 text-pink-400" />
                 </div>
-                <h3 className="font-bold text-white text-center text-lg">Paseador</h3>
+                <h3 className="font-bold text-white text-center text-lg">Walker</h3>
                 <p className="text-xs text-center text-gray-400 mt-1">Quiero ganar dinero paseando</p>
             </button>
         </div>

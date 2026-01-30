@@ -72,7 +72,7 @@ export default function TrackingMapCore({ bookingId }: { bookingId: string }) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-white bg-gray-900 rounded-xl">
                 <div className="animate-spin h-8 w-8 border-4 border-purple-500 rounded-full border-t-transparent mb-4"></div>
-                <p className="opacity-70">Esperando señal GPS del paseador...</p>
+                <p className="opacity-70">Esperando señal GPS del walker...</p>
                 <p className="text-xs opacity-50 mt-2">Asegúrate que el paseo haya iniciado.</p>
             </div>
         )
@@ -87,7 +87,7 @@ export default function TrackingMapCore({ bookingId }: { bookingId: string }) {
             <Marker position={currentPos}>
                 <Popup>
                     <div className="text-center">
-                        <strong>Paseador</strong><br />
+                        <strong>Walker</strong><br />
                         Ubicación actual
                     </div>
                 </Popup>

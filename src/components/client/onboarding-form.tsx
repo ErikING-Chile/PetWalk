@@ -8,7 +8,9 @@ import { Camera, User, MapPin, Phone, Mail, Save } from "lucide-react"
 import { formatRut, validateRut } from "@/lib/formatters"
 import { validatePhone } from "@/utils/validation"
 
-export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { initialData?: any, redirectTo?: string | null }) {
+import { type User as SupabaseUser } from "@supabase/supabase-js"
+
+export function ClientOnboardingForm({ initialData, user, redirectTo = '/client' }: { initialData?: any, user: SupabaseUser, redirectTo?: string | null }) {
     const router = useRouter()
     const supabase = createClient()
     const [isLoading, setIsLoading] = useState(false)
@@ -122,8 +124,8 @@ export function ClientOnboardingForm({ initialData, redirectTo = '/client' }: { 
         setIsLoading(true)
 
         try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) throw new Error("No user found")
+            // Removed client-side getUser call as it fails with HttpOnly cookies
+            if (!user) throw new Error("No user found provided by server")
 
             // Prepend +56 for storage
             const formattedPhone = `+56${formData.phone}`

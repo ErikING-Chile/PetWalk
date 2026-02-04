@@ -24,7 +24,7 @@ export default async function ClientOnboardingPage() {
                 </p>
             </div>
 
-            <ClientOnboardingForm initialData={profile} />
+            <ClientOnboardingForm initialData={profile} user={user} />
         </div>
     )
 }

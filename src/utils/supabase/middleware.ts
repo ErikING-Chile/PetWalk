@@ -53,7 +53,15 @@ export async function updateSession(request: NextRequest) {
         ) {
             const url = request.nextUrl.clone()
             url.pathname = '/login'
-            return NextResponse.redirect(url)
+
+            // Copy cookies to the new response
+            const redirectResponse = NextResponse.redirect(url)
+            const cookiesToSet = response.cookies.getAll()
+            cookiesToSet.forEach((cookie) => {
+                redirectResponse.cookies.set(cookie)
+            })
+
+            return redirectResponse
         }
     }
 
@@ -74,7 +82,15 @@ export async function updateSession(request: NextRequest) {
                 const targetPath = role === 'admin' ? '/admin' : role === 'walker' ? '/walker' : '/client'
                 const url = request.nextUrl.clone()
                 url.pathname = targetPath
-                return NextResponse.redirect(url)
+
+                // Copy cookies to the new response
+                const redirectResponse = NextResponse.redirect(url)
+                const cookiesToSet = response.cookies.getAll()
+                cookiesToSet.forEach((cookie) => {
+                    redirectResponse.cookies.set(cookie)
+                })
+
+                return redirectResponse
             }
 
             // B. Route Protection (Boundary Enforcement)
@@ -82,13 +98,29 @@ export async function updateSession(request: NextRequest) {
             if (role === 'walker' && request.nextUrl.pathname.startsWith('/client')) {
                 const url = request.nextUrl.clone()
                 url.pathname = '/walker'
-                return NextResponse.redirect(url)
+
+                // Copy cookies to the new response
+                const redirectResponse = NextResponse.redirect(url)
+                const cookiesToSet = response.cookies.getAll()
+                cookiesToSet.forEach((cookie) => {
+                    redirectResponse.cookies.set(cookie)
+                })
+
+                return redirectResponse
             }
             // Prevent Clients from Walker areas
             if (role === 'client' && request.nextUrl.pathname.startsWith('/walker')) {
                 const url = request.nextUrl.clone()
                 url.pathname = '/client'
-                return NextResponse.redirect(url)
+
+                // Copy cookies to the new response
+                const redirectResponse = NextResponse.redirect(url)
+                const cookiesToSet = response.cookies.getAll()
+                cookiesToSet.forEach((cookie) => {
+                    redirectResponse.cookies.set(cookie)
+                })
+
+                return redirectResponse
             }
         }
     }

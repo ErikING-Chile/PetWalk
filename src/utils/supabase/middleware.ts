@@ -34,7 +34,12 @@ export async function updateSession(request: NextRequest) {
     // 1. Get User
     const {
         data: { user },
+        error,
     } = await supabase.auth.getUser()
+
+    console.log(`[Middleware] Path: ${request.nextUrl.pathname}`)
+    if (user) console.log(`[Middleware] User: ${user.id}`)
+    else console.log(`[Middleware] No User. Error: ${error?.message}`)
 
     // 2. Protected Routes Logic
     // If no user, redirect to login for protected paths
@@ -80,6 +85,7 @@ export async function updateSession(request: NextRequest) {
             // A. Root Redirection
             if (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/dashboard') {
                 const targetPath = role === 'admin' ? '/admin' : role === 'walker' ? '/walker' : '/client'
+                console.log(`[Middleware] Redirecting root/dashboard to ${targetPath} for role ${role}`)
                 const url = request.nextUrl.clone()
                 url.pathname = targetPath
 
@@ -96,6 +102,7 @@ export async function updateSession(request: NextRequest) {
             // B. Route Protection (Boundary Enforcement)
             // Prevent Walkers from Client areas
             if (role === 'walker' && request.nextUrl.pathname.startsWith('/client')) {
+                console.log(`[Middleware] Redirecting Walker from Client area to /walker`)
                 const url = request.nextUrl.clone()
                 url.pathname = '/walker'
 

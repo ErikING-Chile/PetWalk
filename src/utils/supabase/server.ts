@@ -24,6 +24,12 @@ export async function createClient() {
                     }
                 },
             },
+            cookieOptions: {
+                name: 'sb-auth-token',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+            },
         }
     )
 }

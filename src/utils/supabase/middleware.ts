@@ -28,6 +28,12 @@ export async function updateSession(request: NextRequest) {
                     )
                 },
             },
+            cookieOptions: {
+                name: 'sb-auth-token',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+            },
         }
     )
 
@@ -38,8 +44,12 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     console.log(`[Middleware] Path: ${request.nextUrl.pathname}`)
-    if (user) console.log(`[Middleware] User: ${user.id}`)
-    else console.log(`[Middleware] No User. Error: ${error?.message}`)
+    if (user) {
+        console.log(`[Middleware] User: ${user.id}`)
+        response.headers.set('x-middleware-user-id', user.id)
+    } else {
+        console.log(`[Middleware] No User. Error: ${error?.message}`)
+    }
 
     // 2. Protected Routes Logic
     // If no user, redirect to login for protected paths

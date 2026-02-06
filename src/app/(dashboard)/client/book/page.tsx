@@ -42,7 +42,7 @@ export default function BookingPage() {
 
     const handleConfirmBooking = async () => {
         if (!defaultPayment) {
-            alert('Por favor agrega un método de pago en tu perfil antes de reservar')
+            alert('⚠️ No tienes un método de pago seleccionado.\n\nPor favor, agrega una tarjeta o selecciona una por defecto en la sección "Métodos de Pago" antes de confirmar la reserva.')
             return
         }
 
@@ -337,7 +337,7 @@ export default function BookingPage() {
 
                         <button
                             type="button"
-                            disabled={!selectedWalker || !defaultPayment || isProcessing}
+                            disabled={!selectedWalker || isProcessing}
                             onClick={handleConfirmBooking}
                             className="btn-primary w-full mt-4 text-lg shadow-xl shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >

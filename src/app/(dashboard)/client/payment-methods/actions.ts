@@ -104,6 +104,15 @@ export async function addPaymentMethod(formData: FormData) {
         return { success: false, error: 'Año de expiración inválido' }
     }
 
+    // Check if user has any existing payment methods
+    const { count } = await supabase
+        .from('payment_methods')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+    // If no cards exist, force this one to be default
+    const shouldBeDefault = isDefault || count === 0
+
     const { error } = await supabase
         .from('payment_methods')
         .insert({
@@ -114,7 +123,7 @@ export async function addPaymentMethod(formData: FormData) {
             expiry_month: expiryMonth,
             expiry_year: expiryYear,
             cardholder_name: cardholderName,
-            is_default: isDefault
+            is_default: shouldBeDefault
         })
 
     if (error) {

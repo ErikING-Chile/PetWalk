@@ -1,6 +1,6 @@
 'use client'
 
-import { signout } from '@/app/login/actions'
+
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -88,13 +88,15 @@ export function Sidebar({ role = 'client' }: SidebarProps) {
             </div>
 
             <div className="border-t border-white/10 p-4">
-                <button
-                    onClick={() => signout()}
-                    className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-red-500/10 hover:text-red-400"
-                >
-                    <LogOut className="mr-3 h-5 w-5" />
-                    Sign Out
-                </button>
+                <form action="/auth/signout" method="POST">
+                    <button
+                        type="submit"
+                        className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition-all hover:bg-red-500/10 hover:text-red-400"
+                    >
+                        <LogOut className="mr-3 h-5 w-5" />
+                        Sign Out
+                    </button>
+                </form>
             </div>
         </div>
     )

@@ -142,6 +142,19 @@ export async function submitSurvey(data: SurveyData) {
     return { success: true }
 }
 
+// Adapters for older components (RatingForm, ReviewForm)
+export async function submitReview(bookingId: string, rating: number, comment: string) {
+    return submitSurvey({
+        bookingId,
+        rating,
+        comment,
+        checkPunctuality: false,
+        checkCare: false,
+        checkCommunication: false,
+        reportedIssue: false
+    })
+}
+
 export async function sendChatMessage(bookingId: string, content: string, mediaUrl?: string, type: 'text' | 'image' = 'text') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

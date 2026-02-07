@@ -14,6 +14,7 @@ type Notification = {
     created_at: string
     link?: string
     type?: 'info' | 'success' | 'warning' | 'error'
+    user_id?: string // Added for filtering check
 }
 
 export function Notifications() {

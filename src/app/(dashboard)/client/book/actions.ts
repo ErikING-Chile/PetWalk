@@ -23,7 +23,8 @@ export async function getWalkers() {
             )
         `)
         .eq('status', 'approved')
-        .limit(10)
+        .eq('status', 'approved')
+        .limit(50)
 
     // SIMULATED LOCATION FOR MVP
     // Client at Plaza Baquedano, Santiago
@@ -35,10 +36,10 @@ export async function getWalkers() {
     const activeWalksCounts = await getMultipleWalkersActiveWalks(walkerIds)
 
     const walkersWithLoc = walkers?.map(w => {
-        // Random location within ~5km
-        // 0.04 degrees is roughly 4-5km
-        const lat = clientLat + (Math.random() - 0.5) * 0.04
-        const lon = clientLon + (Math.random() - 0.5) * 0.04
+        // Random location within ~3km to ensure visibility in immediate filter
+        // 0.025 degrees is roughly 2.5-3km
+        const lat = clientLat + (Math.random() - 0.5) * 0.025
+        const lon = clientLon + (Math.random() - 0.5) * 0.025
 
         const distance = calculateDistance(clientLat, clientLon, lat, lon)
 
@@ -100,24 +101,44 @@ export async function createBooking(formData: FormData) {
 
 import { revalidatePath } from 'next/cache'
 
-export async function submitReview(bookingId: string, rating: number, comment: string) {
+// Interface for Survey Data
+interface SurveyData {
+    bookingId: string
+    rating: number
+    checkPunctuality: boolean
+    checkCare: boolean
+    checkCommunication: boolean
+    comment: string
+    reportedIssue: boolean
+    issueDescription?: string
+}
+
+export async function submitSurvey(data: SurveyData) {
     const supabase = await createClient()
 
-    // Check if review exists logic handled in UI/DB constraint, but safe to ignore error or handle
     const { error } = await supabase
-        .from('walk_reviews')
+        .from('walk_surveys')
         .insert({
-            booking_id: bookingId,
-            rating,
-            comment
+            booking_id: data.bookingId,
+            rating: data.rating,
+            check_punctuality: data.checkPunctuality,
+            check_care: data.checkCare,
+            check_communication: data.checkCommunication,
+            comment: data.comment,
+            reported_issue: data.reportedIssue,
+            issue_description: data.issueDescription
         })
 
     if (error) {
-        console.error("Review Error:", error)
-        return { error: "Error enviando calificación. ¿Ya calificaste?" }
+        console.error("Survey Error:", error)
+        return { error: "Error enviando encuesta. ¿Ya calificaste?" }
     }
 
+    // Also update booking status to fully closed if needed, but 'completed' is usually final.
+    // Maybe we want a 'reviewed' flag or similar? For now, just revalidate.
+
     revalidatePath('/client')
+    revalidatePath(`/client/track/${data.bookingId}`)
     return { success: true }
 }
 

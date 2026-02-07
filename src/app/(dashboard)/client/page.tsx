@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server"
 import { format, subDays, isSameDay } from "date-fns"
 import { es } from "date-fns/locale"
 import { WalkChart } from "@/components/dashboard/walk-chart"
+import { PlansSection } from "@/components/client/plans-section"
 
 export const dynamic = 'force-dynamic'
 
@@ -52,6 +53,20 @@ export default async function ClientDashboard() {
 
     if (historyError) console.error("History Error:", historyError)
 
+    // Fetch Plans
+    const { data: plans } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price', { ascending: true })
+
+    // Fetch Current Subscription
+    const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('client_id', user?.id)
+        .eq('status', 'active')
+        .maybeSingle()
 
     // Calculate Stats
     const { count: totalWalks } = await supabase
@@ -141,8 +156,6 @@ export default async function ClientDashboard() {
                     </button>
                 </Link>
             </div>
-
-            {/* DEBUG SECTION REMOVED */}
 
             {/* Active/Next Walk Section */}
             <div className="space-y-4">
@@ -234,6 +247,9 @@ export default async function ClientDashboard() {
                     </Card>
                 )}
             </div>
+
+            {/* Subscription Plans */}
+            <PlansSection plans={plans || []} currentPlanId={subscription?.plan_id} />
 
             {/* Recent Activity */}
             <div className="space-y-4">

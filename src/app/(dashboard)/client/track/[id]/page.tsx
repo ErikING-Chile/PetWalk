@@ -5,6 +5,7 @@ import { MapPin, Clock, Phone } from "lucide-react"
 import { ChatComponent } from "@/components/common/chat"
 import { CancellationControls } from "@/components/client/cancellation-controls"
 import { RatingForm } from "@/components/client/rating-form"
+import { SurveyWrapper } from "@/components/walk/survey-wrapper"
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
 
     const { data: booking, error } = await supabase
         .from('walk_bookings')
-        .select(`*, walker:profiles!walker_id(*)`)
+        .select(`*, walker:profiles!walker_id(*), walk_surveys(*)`)
         .eq('id', id)
         .single()
 
@@ -66,6 +67,12 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
 
             {/* ACTIONS & CHAT - Scrollable Area */}
             <div className="p-4 space-y-4 bg-black flex-1">
+
+                <SurveyWrapper
+                    bookingId={id}
+                    initialStatus={booking.status}
+                    hasSurvey={booking.walk_surveys && booking.walk_surveys.length > 0}
+                />
 
                 {/* Cancellation / Termination Options */}
                 <CancellationControls bookingId={id} status={booking.status} walkerId={booking.walker_id} />

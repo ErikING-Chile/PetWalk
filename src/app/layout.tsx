@@ -31,6 +31,9 @@ export const viewport = {
   themeColor: "#9333ea",
 };
 
+import { NotificationsProvider } from "@/context/notifications-context";
+import { NotificationToasts } from "@/components/ui/notification-toast";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,7 +44,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <NotificationsProvider>
+          <NotificationToasts />
+          {children}
+        </NotificationsProvider>
       </body>
     </html>
   );

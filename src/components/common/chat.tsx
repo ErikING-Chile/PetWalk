@@ -11,6 +11,8 @@ export function ChatComponent({ bookingId, currentUserId }: { bookingId: string,
     const supabase = createClient()
     const bottomRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const [typingUsers, setTypingUsers] = useState<string[]>([])
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
     useEffect(() => {
         // Load initial messages
@@ -24,7 +26,7 @@ export function ChatComponent({ bookingId, currentUserId }: { bookingId: string,
                 bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
             })
 
-        // Subscribe to new messages
+        // Subscribe to new messages & Presence
         const channel = supabase
             .channel(`chat-${bookingId}`)
             .on(
@@ -40,17 +42,59 @@ export function ChatComponent({ bookingId, currentUserId }: { bookingId: string,
                     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
                 }
             )
+            .on('presence', { event: 'sync' }, () => {
+                const state = channel.presenceState()
+                const usersTyping: string[] = []
+
+                for (const key in state) {
+                    const userState = state[key] as any
+                    // Check if *any* of the presences for this key are typing
+                    // userState is an array of presence objects for that key
+                    if (Array.isArray(userState)) {
+                        userState.forEach((presence: any) => {
+                            if (presence.typing && presence.user_id !== currentUserId) {
+                                usersTyping.push(presence.user_id)
+                            }
+                        })
+                    }
+                }
+                setTypingUsers([...new Set(usersTyping)])
+            })
             .subscribe()
 
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [bookingId, supabase])
+    }, [bookingId, supabase, currentUserId])
+
+    const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInput(e.target.value)
+
+        const channel = supabase.channel(`chat-${bookingId}`)
+
+        // Clear existing timeout
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+
+        // Track typing immediately if not already (optimization: check if we just sent it?)
+        // Simply tracking updates the state.
+        await channel.track({ user_id: currentUserId, typing: true })
+
+        // Set timeout to stop typing
+        typingTimeoutRef.current = setTimeout(async () => {
+            await channel.track({ user_id: currentUserId, typing: false })
+        }, 2000)
+    }
 
     const handleSend = async () => {
         if (!input.trim()) return
         const content = input
         setInput('') // Optimistic clear
+
+        // Stop typing immediately
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+        const channel = supabase.channel(`chat-${bookingId}`)
+        await channel.track({ user_id: currentUserId, typing: false })
+
         await sendChatMessage(bookingId, content)
     }
 
@@ -88,13 +132,13 @@ export function ChatComponent({ bookingId, currentUserId }: { bookingId: string,
     }
 
     return (
-        <div className="flex flex-col h-[400px] bg-gray-900 rounded-xl border border-white/10 overflow-hidden">
-            <div className="bg-white/5 p-3 border-b border-white/10 flex justify-between items-center">
+        <div className="flex flex-col h-[400px] bg-gray-900 rounded-xl border border-white/10 overflow-hidden relative">
+            <div className="bg-white/5 p-3 border-b border-white/10 flex justify-between items-center z-10">
                 <h3 className="font-bold text-white text-sm">Chat del Paseo</h3>
                 {isUploading && <span className="text-xs text-purple-400 flex items-center gap-1"><Loader2 className="animate-spin w-3 h-3" /> Subiendo...</span>}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-8">
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 text-xs mt-10">
                         Inicia la conversación...
@@ -130,10 +174,25 @@ export function ChatComponent({ bookingId, currentUserId }: { bookingId: string,
                         </div>
                     )
                 })}
+                {/* Typing Indicator inside list or fixed? Fixed above input is better */}
                 <div ref={bottomRef} />
             </div>
 
-            <div className="p-3 bg-white/5 border-t border-white/10 flex gap-2 items-center">
+            {/* Typing Indicator Overlay */}
+            {typingUsers.length > 0 && (
+                <div className="absolute bottom-[65px] left-4 z-20">
+                    <div className="flex items-center gap-1 bg-black/60 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm">
+                        <span className="flex gap-0.5">
+                            <span className="w-1 h-1 bg-purple-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                            <span className="w-1 h-1 bg-purple-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                            <span className="w-1 h-1 bg-purple-400 rounded-full animate-bounce"></span>
+                        </span>
+                        <span className="text-[10px] text-gray-300 ml-1">Escribiendo...</span>
+                    </div>
+                </div>
+            )}
+
+            <div className="p-3 bg-white/5 border-t border-white/10 flex gap-2 items-center z-10">
                 <input
                     type="file"
                     accept="image/*"
@@ -154,7 +213,7 @@ export function ChatComponent({ bookingId, currentUserId }: { bookingId: string,
 
                 <input
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     placeholder="Escribe..."
                     className="flex-1 h-10 bg-black/40 text-white text-sm rounded-full px-4 border border-white/10 focus:border-purple-500 outline-none min-w-0"

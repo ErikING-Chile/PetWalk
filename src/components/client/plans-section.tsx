@@ -19,10 +19,19 @@ interface Plan {
 export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentPlanId?: string }) {
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
+    const [pendingPlan, setPendingPlan] = useState<Plan | null>(null)
     const supabase = createClient()
     const router = useRouter()
 
-    const handleSubscribe = async (plan: Plan) => {
+    const handleSubscribeClick = (plan: Plan) => {
+        setPendingPlan(plan)
+        setShowConfirmModal(true)
+    }
+
+    const confirmSubscription = async () => {
+        if (!pendingPlan) return
+
         setLoading(true)
         try {
             const { data: { user } } = await supabase.auth.getUser()
@@ -35,13 +44,15 @@ export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentP
                 .from('subscriptions')
                 .insert({
                     client_id: user.id,
-                    plan_id: plan.id,
+                    plan_id: pendingPlan.id,
                     status: 'active'
                 })
 
             if (error) throw error
 
-            alert(`¡Suscrito al plan ${plan.name}!`)
+            alert(`¡Suscrito al plan ${pendingPlan.name}!`)
+            setShowConfirmModal(false)
+            setPendingPlan(null)
             router.refresh()
         } catch (error) {
             console.error(error)
@@ -110,22 +121,61 @@ export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentP
                             </ul>
 
                             <button
-                                onClick={() => handleSubscribe(plan)}
+                                onClick={() => handleSubscribeClick(plan)}
                                 disabled={loading || isCurrent}
                                 className={cn(
-                                    "w-full py-3 rounded-xl font-bold transition-all",
+                                    "w-full py-3 rounded-xl font-bold transition-all border",
                                     isCurrent
-                                        ? "bg-gray-700 text-gray-400 cursor-default"
-                                        : "bg-white/5 hover:bg-white/10 text-white hover:text-purple-300 border border-white/10 hover:border-purple-500/50"
+                                        ? "bg-gray-700 text-gray-400 cursor-default border-transparent"
+                                        : "bg-white/5 hover:bg-white/10 text-white hover:text-purple-300 border-white/10 hover:border-purple-500/50"
                                 )}
                             >
-                                {loading && selectedPlan === plan.id ? 'Procesando...' :
-                                    isCurrent ? 'Plan Actual' : 'Elegir Plan'}
+                                {isCurrent ? 'Plan Actual' : 'Elegir Plan'}
                             </button>
                         </motion.div>
                     )
                 })}
             </div>
+
+            {/* Modal de Confirmación */}
+            {showConfirmModal && pendingPlan && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-gray-900 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-xl"
+                    >
+                        <h3 className="text-xl font-bold text-white mb-4">Confirmar Suscripción</h3>
+
+                        <div className="bg-purple-900/20 border border-purple-500/30 rounded-xl p-4 mb-6">
+                            <h4 className="font-bold text-purple-300 mb-1">{pendingPlan.name}</h4>
+                            <div className="text-2xl font-bold text-white mb-2">
+                                ${pendingPlan.price.toLocaleString()} <span className="text-sm font-normal text-gray-400">/mes</span>
+                            </div>
+                            <p className="text-sm text-gray-300">
+                                Este es un plan de pago mensual recurrente. Se te cobrará automáticamente cada mes.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowConfirmModal(false)}
+                                className="flex-1 py-3 px-4 rounded-xl font-bold bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmSubscription}
+                                disabled={loading}
+                                className="flex-1 py-3 px-4 rounded-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg transition-all"
+                            >
+                                {loading ? 'Procesando...' : 'Confirmar y Suscribirse'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </section>
     )
 }

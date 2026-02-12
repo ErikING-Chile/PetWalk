@@ -47,20 +47,16 @@ export function ClientRealtimeManager({ userId }: { userId: string }) {
                                     body: 'Tu mascota ha comenzado su paseo.',
                                 })
                             }
-                            // Optional: Alert to force user attention if they are staring at the code
-                            // alert("¡El paseo ha comenzado!") 
                         }
-                    }
-                }
                     }
                 }
             )
             .subscribe()
 
-return () => {
-    supabase.removeChannel(channel)
-}
+        return () => {
+            supabase.removeChannel(channel)
+        }
     }, [router, supabase, userId])
 
-return null
+    return null
 }

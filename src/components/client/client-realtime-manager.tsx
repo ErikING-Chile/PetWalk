@@ -60,7 +60,7 @@ export function ClientRealtimeManager({ userId }: { userId: string }) {
 return () => {
     supabase.removeChannel(channel)
 }
-}, [router, supabase, userId])
+    }, [router, supabase, userId])
 
 return null
 }

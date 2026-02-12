@@ -45,6 +45,9 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
                         <p className="text-xs text-uppercase text-purple-300 font-bold mb-1 tracking-wider">CÓDIGO DE INICIO</p>
                         <p className="text-4xl font-mono font-bold text-white tracking-[0.5em]">{booking.start_verification_code}</p>
                         <p className="text-[10px] text-gray-400 mt-2">Dicta este código al walker cuando llegue.</p>
+                        <p className="text-[9px] text-red-400 mt-1 font-bold uppercase tracking-wide">
+                            ⚠️ Solo entregar de forma presencial
+                        </p>
                     </div>
                 )}
             </div>

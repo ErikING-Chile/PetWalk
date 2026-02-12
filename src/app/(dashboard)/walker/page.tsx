@@ -4,6 +4,8 @@ import Link from "next/link"
 import { GraduationCap } from "lucide-react"
 import { WalkerWalkManager } from "@/components/walker/walker-walk-manager"
 
+import { WalkerRealtimeManager } from "@/components/walker/walker-realtime-manager"
+
 export const dynamic = 'force-dynamic'
 
 export default async function WalkerDashboard() {
@@ -12,6 +14,7 @@ export default async function WalkerDashboard() {
 
     return (
         <div className="space-y-6">
+            <WalkerRealtimeManager />
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-600">
                 Panel de Walker
             </h1>

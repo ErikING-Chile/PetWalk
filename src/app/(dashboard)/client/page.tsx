@@ -7,6 +7,8 @@ import { es } from "date-fns/locale"
 import { WalkChart } from "@/components/dashboard/walk-chart"
 import { PlansSection } from "@/components/client/plans-section"
 
+import { ClientRealtimeManager } from "@/components/client/client-realtime-manager"
+
 export const dynamic = 'force-dynamic'
 
 export default async function ClientDashboard() {
@@ -98,8 +100,12 @@ export default async function ClientDashboard() {
         return { day: dayStr.charAt(0).toUpperCase() + dayStr.slice(1), count }
     })
 
+
+
+
     return (
         <div className="space-y-6 pb-20">
+            {user && <ClientRealtimeManager userId={user.id} />}
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
@@ -208,6 +214,9 @@ export default async function ClientDashboard() {
                                 <p className="text-[10px] text-gray-400 mb-1">Entrégale este código para comenzar:</p>
                                 {/* @ts-ignore */}
                                 <p className="text-4xl font-mono font-bold text-white tracking-[0.2em] drop-shadow-lg">{nextWalk.start_code}</p>
+                                <p className="text-[9px] text-red-400 mt-2 font-bold uppercase tracking-wide bg-red-900/20 px-2 py-1 rounded">
+                                    ⚠️ Solo entregar de forma presencial
+                                </p>
                             </div>
                         )}
 

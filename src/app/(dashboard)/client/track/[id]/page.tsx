@@ -15,7 +15,7 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
 
     const { data: booking, error } = await supabase
         .from('walk_bookings')
-        .select(`*, walker:profiles!walker_id(*), walk_surveys(*)`)
+        .select(`*, walker:profiles!walker_id(*), walk_surveys(*), walk_ratings(id)`)
         .eq('id', id)
         .single()
 
@@ -104,7 +104,19 @@ export default async function TrackingPage({ params }: { params: Promise<{ id: s
                         <p className="text-red-400 text-xs">Debes iniciar sesión para ver el chat</p>
                     </div>
                 )}
+                {/* Walk Status Manager (Realtime & Rating Modal) */}
+                <WalkStatusManager
+                    bookingId={id}
+                    initialStatus={booking.status}
+                    // @ts-ignore
+                    isRateable={booking.status === 'completed' && (!booking.walk_ratings || booking.walk_ratings.length === 0)}
+                    scheduledAt={booking.scheduled_at}
+                    durationMinutes={booking.duration_minutes}
+                />
             </div>
         </div>
     )
 }
+
+
+import { WalkStatusManager } from "@/components/walk/walk-status-manager"

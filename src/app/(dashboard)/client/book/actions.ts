@@ -233,3 +233,49 @@ export async function terminateWalkEarly(bookingId: string, reason: string) {
     revalidatePath(`/client/track/${bookingId}`)
     return { success: true }
 }
+// New Walk Rating Action
+export async function submitWalkRating(bookingId: string, rating: number, comment: string, petCondition: 'happy' | 'sad' | 'injured') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: "Unauthorized" }
+
+    // Verify booking is completed and belongs to user
+    const { data: booking, error: bookingError } = await supabase
+        .from('walk_bookings')
+        .select('walker_id, status')
+        .eq('id', bookingId)
+        .eq('client_id', user.id)
+        .single()
+
+    if (bookingError || !booking) {
+        return { error: "Booking not found or unauthorized" }
+    }
+
+    if (booking.status !== 'completed') {
+        return { error: "El paseo aún no ha finalizado." }
+    }
+
+    const { error } = await supabase
+        .from('walk_ratings')
+        .insert({
+            walk_id: bookingId,
+            walker_id: booking.walker_id,
+            client_id: user.id,
+            rating,
+            comment,
+            pet_condition: petCondition
+        })
+
+    if (error) {
+        if (error.code === '23505') { // Unique violation
+            return { error: "Ya has calificado este paseo." }
+        }
+        console.error("Rating Error:", error)
+        return { error: "Error guardando la calificación." }
+    }
+
+    revalidatePath('/client')
+    revalidatePath(`/client/track/${bookingId}`)
+    return { success: true }
+}

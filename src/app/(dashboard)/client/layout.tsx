@@ -14,7 +14,10 @@ export default function ClientLayout({
                 {children}
             </main>
 
+            <SupportWidget />
             <BottomNav role="client" />
         </div>
     )
 }
+
+import { SupportWidget } from "@/components/support/support-widget"

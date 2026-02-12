@@ -28,6 +28,22 @@ export async function getWalkerRequests() {
     return data || []
 }
 
+export async function getWalkerActiveWalk() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return null
+
+    const { data } = await supabase
+        .from('walk_bookings')
+        .select('*')
+        .eq('walker_id', user.id)
+        .eq('status', 'in_progress')
+        .single()
+
+    return data
+}
+
 export async function acceptBooking(bookingId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -169,7 +185,8 @@ export async function completeWalk(bookingId: string) {
         .update({
             status: 'completed',
             actual_distance_km: parseFloat(distance.toFixed(2)),
-            actual_duration_min: duration
+            actual_duration_min: duration,
+            ended_at: new Date().toISOString()
         })
         .eq('id', bookingId)
 

@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { Check, Star, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
-import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
+import { subscribeToPlan } from '@/app/(dashboard)/client/plans/actions'
 
 interface Plan {
     id: string
@@ -17,12 +17,12 @@ interface Plan {
 }
 
 export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentPlanId?: string }) {
-    const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [pendingPlan, setPendingPlan] = useState<Plan | null>(null)
-    const supabase = createClient()
     const router = useRouter()
+
+    const currentPlan = plans.find(p => p.id === currentPlanId)
 
     const handleSubscribeClick = (plan: Plan) => {
         setPendingPlan(plan)
@@ -34,29 +34,19 @@ export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentP
 
         setLoading(true)
         try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) {
-                router.push('/login')
-                return
+            const result = await subscribeToPlan(pendingPlan.id)
+
+            if (result.error) {
+                alert(result.error)
+            } else {
+                alert(`¡Operación exitosa! Ahora tienes el plan ${pendingPlan.name}.`)
+                setShowConfirmModal(false)
+                setPendingPlan(null)
+                router.refresh()
             }
-
-            const { error } = await supabase
-                .from('subscriptions')
-                .insert({
-                    client_id: user.id,
-                    plan_id: pendingPlan.id,
-                    status: 'active'
-                })
-
-            if (error) throw error
-
-            alert(`¡Suscrito al plan ${pendingPlan.name}!`)
-            setShowConfirmModal(false)
-            setPendingPlan(null)
-            router.refresh()
         } catch (error) {
             console.error(error)
-            alert('Error al suscribirse. Intenta nuevamente.')
+            alert('Error al procesar solicitud. Intenta nuevamente.')
         } finally {
             setLoading(false)
         }
@@ -71,8 +61,28 @@ export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentP
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {plans.map((plan) => {
-                    const isPopular = plan.name.includes('Estándar')
+                    const isPopular = plan.name.includes('Estándar') || plan.walks_per_week === 3
                     const isCurrent = currentPlanId === plan.id
+
+                    let buttonText = 'Elegir Plan'
+                    let buttonStyle = "bg-white/5 hover:bg-white/10 text-white hover:text-purple-300 border-white/10 hover:border-purple-500/50"
+
+                    if (isCurrent) {
+                        buttonText = 'Plan Actual'
+                        buttonStyle = "bg-gray-700 text-gray-400 cursor-default border-transparent"
+                    } else if (currentPlan) {
+                        if (plan.price > currentPlan.price) {
+                            buttonText = 'Mejorar Plan' // Upgrade
+                            buttonStyle = "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-transparent"
+                        } else {
+                            buttonText = 'Cambiar Plan' // Downgrade
+                        }
+                    } else {
+                        // No plan active, default styling
+                        if (isPopular) {
+                            buttonStyle = "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-transparent"
+                        }
+                    }
 
                     return (
                         <motion.div
@@ -125,12 +135,10 @@ export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentP
                                 disabled={loading || isCurrent}
                                 className={cn(
                                     "w-full py-3 rounded-xl font-bold transition-all border",
-                                    isCurrent
-                                        ? "bg-gray-700 text-gray-400 cursor-default border-transparent"
-                                        : "bg-white/5 hover:bg-white/10 text-white hover:text-purple-300 border-white/10 hover:border-purple-500/50"
+                                    buttonStyle
                                 )}
                             >
-                                {isCurrent ? 'Plan Actual' : 'Elegir Plan'}
+                                {buttonText}
                             </button>
                         </motion.div>
                     )
@@ -154,7 +162,8 @@ export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentP
                                 ${pendingPlan.price.toLocaleString()} <span className="text-sm font-normal text-gray-400">/mes</span>
                             </div>
                             <p className="text-sm text-gray-300">
-                                Este es un plan de pago mensual recurrente. Se te cobrará automáticamente cada mes.
+                                Este es un plan de pago mensual recurrente.
+                                {currentPlanId && <span className="block mt-2 text-yellow-300">Tu plan actual será reemplazado inmediatamente.</span>}
                             </p>
                         </div>
 
@@ -170,7 +179,7 @@ export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentP
                                 disabled={loading}
                                 className="flex-1 py-3 px-4 rounded-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg transition-all"
                             >
-                                {loading ? 'Procesando...' : 'Confirmar y Suscribirse'}
+                                {loading ? 'Procesando...' : 'Confirmar Cambios'}
                             </button>
                         </div>
                     </motion.div>
@@ -179,3 +188,4 @@ export function PlansSection({ plans, currentPlanId }: { plans: Plan[], currentP
         </section>
     )
 }
+

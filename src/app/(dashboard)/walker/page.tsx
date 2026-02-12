@@ -1,18 +1,31 @@
 import { WalkerInvitationCard } from "@/components/walker/invitation-card"
-import { getWalkerRequests } from "./actions"
+import { getWalkerRequests, getWalkerActiveWalk } from "./actions"
 import Link from "next/link"
 import { GraduationCap } from "lucide-react"
+import { WalkerWalkManager } from "@/components/walker/walker-walk-manager"
 
 export const dynamic = 'force-dynamic'
 
 export default async function WalkerDashboard() {
     const requests = await getWalkerRequests()
+    const activeWalk = await getWalkerActiveWalk()
 
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-600">
                 Panel de Walker
             </h1>
+
+            {/* Active Walk Manager (Notifications) */}
+            {activeWalk && <WalkerWalkManager booking={activeWalk} />}
+
+            {/* Active Walk Banner (Optional visualization) */}
+            {activeWalk && (
+                <div className="bg-green-900/30 border border-green-500/50 p-4 rounded-xl mb-4 animate-pulse">
+                    <h2 className="text-green-400 font-bold">¡Tienes un paseo en curso!</h2>
+                    <p className="text-sm text-green-200">Revisa el tiempo restante.</p>
+                </div>
+            )}
 
             <div className="space-y-4">
                 {requests.map((booking: any) => (
@@ -45,3 +58,4 @@ export default async function WalkerDashboard() {
         </div>
     )
 }
+

@@ -57,6 +57,17 @@ export function WalkerInvitationCard({ booking }: { booking: Booking }) {
         // ... existing useEffects
     }, [coords])
 
+    const handleReject = async () => {
+        if (!confirm("¿Estás seguro de rechazar este paseo?")) return
+        try {
+            const result = await rejectBooking(booking.id)
+            if (result?.error) alert(result.error)
+        } catch (error) {
+            console.error("Error rejecting:", error)
+            alert("Error al rechazar.")
+        }
+    }
+
     const handleWalkerCancel = async () => {
         if (!cancelReason.trim()) return
         await cancelWalkByWalker(booking.id, cancelReason)
@@ -148,7 +159,7 @@ export function WalkerInvitationCard({ booking }: { booking: Booking }) {
                 {booking.status === 'requested' && (
                     <div className="flex gap-2 w-full">
                         <button
-                            onClick={async () => await rejectBooking(booking.id)}
+                            onClick={handleReject}
                             className="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold py-2 rounded-lg transition-colors border border-red-500/20"
                         >
                             Rechazar

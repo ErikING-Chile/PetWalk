@@ -26,6 +26,7 @@ export function ClientRealtimeManager({ userId }: { userId: string }) {
                     const oldStatus = payload.old.status
 
                     if (newStatus !== oldStatus) {
+                        console.log("Status changed:", oldStatus, "->", newStatus)
                         router.refresh()
 
                         if (newStatus === 'assigned' && oldStatus === 'requested') {
@@ -34,20 +35,32 @@ export function ClientRealtimeManager({ userId }: { userId: string }) {
                                     body: 'Un walker ha aceptado tu solicitud. ¡Prepárate!',
                                 })
                             } else {
-                                // Fallback alert or banner logic handled by page refresh showing state
-                                // But explicit alert requested:
                                 alert("¡Tu solicitud ha sido aceptada por un Walker!")
                             }
                         }
+
+                        if (newStatus === 'in_progress' && oldStatus === 'assigned') {
+                            // Force immediate UI update for start
+                            router.refresh()
+                            if ('Notification' in window && Notification.permission === 'granted') {
+                                new Notification('¡Paseo Iniciado!', {
+                                    body: 'Tu mascota ha comenzado su paseo.',
+                                })
+                            }
+                            // Optional: Alert to force user attention if they are staring at the code
+                            // alert("¡El paseo ha comenzado!") 
+                        }
+                    }
+                }
                     }
                 }
             )
             .subscribe()
 
-        return () => {
-            supabase.removeChannel(channel)
-        }
-    }, [router, supabase, userId])
+return () => {
+    supabase.removeChannel(channel)
+}
+}, [router, supabase, userId])
 
-    return null
+return null
 }

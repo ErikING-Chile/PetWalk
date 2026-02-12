@@ -33,9 +33,10 @@ export function CancellationControls({ bookingId, status, walkerId }: Cancellati
     }, [walkerId])
 
     // Determine available action based on status
-    const canCancel = (status === 'requested' || status === 'assigned') && walkerActiveWalks === 0
+    const canCancel = (status === 'requested' || status === 'assigned')
     const canTerminate = status === 'in_progress'
-    const cancelDisabledByActiveWalks = (status === 'requested' || status === 'assigned') && walkerActiveWalks > 0
+    // Removed restriction based on walker activity for cancellation
+    const cancelDisabledByActiveWalks = false
 
     const handleOpen = (type: 'cancel' | 'terminate') => {
         setActionType(type)

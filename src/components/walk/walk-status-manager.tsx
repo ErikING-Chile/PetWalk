@@ -73,10 +73,11 @@ export function WalkStatusManager({ bookingId, initialStatus, isRateable = false
                     const newStatus = payload.new.status
                     if (newStatus !== status) {
                         setStatus(newStatus)
-                        router.refresh() // Refresh server components to update UI (Map, etc.)
+                        router.refresh()
 
                         if (newStatus === 'completed') {
-                            setShowModal(true)
+                            // Redirect to dashboard with rating query param
+                            router.push(`/client?rate_walk=${bookingId}`)
                         }
                     }
                 }

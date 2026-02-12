@@ -8,6 +8,7 @@ import { WalkChart } from "@/components/dashboard/walk-chart"
 import { PlansSection } from "@/components/client/plans-section"
 
 import { ClientRealtimeManager } from "@/components/client/client-realtime-manager"
+import { DashboardRatingWrapper } from "@/components/client/dashboard-rating-wrapper"
 
 export const dynamic = 'force-dynamic'
 
@@ -46,12 +47,14 @@ export default async function ClientDashboard() {
             walker:profiles!walker_id(
                 full_name
             ),
-            pet:pets(name)
+            pet:pets(name),
+            walk_ratings(id)
         `)
         .eq('client_id', user?.id)
         .in('status', ['completed', 'cancelled'])
         .order('scheduled_at', { ascending: false })
         .limit(5)
+
 
     if (historyError) console.error("History Error:", historyError)
 
@@ -101,11 +104,15 @@ export default async function ClientDashboard() {
     })
 
 
-
+    // Find first unrated completed walk
+    const unratedWalk = history?.find((w: any) =>
+        w.status === 'completed' && (!w.walk_ratings || w.walk_ratings.length === 0)
+    )
 
     return (
         <div className="space-y-6 pb-20">
             {user && <ClientRealtimeManager userId={user.id} />}
+            <DashboardRatingWrapper unratedBookingId={unratedWalk?.id} />
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>

@@ -22,7 +22,9 @@ export async function getWalkerRequests() {
             pets (name, breed, photo_url),
             profiles:client_id (full_name, avatar_url)
         `)
-        .or(`walker_id.eq.${user?.id},status.eq.requested`)
+        // Show requests for me, open requests, or assigned to me.
+        .or(`walker_id.eq.${user?.id},walker_id.is.null`)
+        .in('status', ['requested', 'assigned'])
         .order('scheduled_at', { ascending: true })
 
     return data || []

@@ -43,21 +43,21 @@ export function StartWalkVerification({ bookingId }: { bookingId: string }) {
                 Pídele al dueño el código de 4 dígitos que aparece en su pantalla.
             </p>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-3">
                 <input
                     type="text"
                     maxLength={4}
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="0000"
-                    className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 text-center text-2xl font-mono tracking-widest text-white focus:outline-none focus:border-pink-500 transition-colors"
+                    className="w-full bg-black/50 border border-white/10 rounded-lg py-4 text-center text-3xl font-mono tracking-[1em] text-white focus:outline-none focus:border-pink-500 transition-colors"
                 />
                 <button
                     onClick={handleVerify}
                     disabled={code.length !== 4 || loading}
-                    className="bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 rounded-lg font-bold transition-all"
+                    className="w-full bg-pink-600 hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-lg font-bold text-lg transition-all"
                 >
-                    {loading ? '...' : 'Iniciar'}
+                    {loading ? 'Verificando...' : 'Iniciar Paseo'}
                 </button>
             </div>
             {error && <p className="text-red-400 text-xs mt-2 font-bold animate-pulse">{error}</p>}

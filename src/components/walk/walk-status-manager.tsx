@@ -26,22 +26,18 @@ export function WalkStatusManager({ bookingId, initialStatus, isRateable = false
             const checkReturning = () => {
                 const start = new Date(scheduledAt).getTime()
                 const end = start + durationMinutes * 60 * 1000
+                const fiveMinutesBeforeEnd = end - (5 * 60 * 1000)
                 const now = Date.now()
 
-                // If time is up (or nearly up, e.g. < 2 min left?) 
-                // Requirement: "justo al terminar". Let's say when time <= 0.
-                // Or maybe 1 minute before?
-                // Let's stick to: if time is up, pet should be returning. 
-                const isTimeUp = now >= end
+                // Trigger 5 minutes before finish
+                const isTimeUp = now >= fiveMinutesBeforeEnd
 
                 if (isTimeUp && !returningNotified) {
                     const key = `notified_returning_${bookingId}`
                     if (!localStorage.getItem(key)) {
-                        alert("🐾 Tu mascota debería estar de regreso pronto (Tiempo finalizado).")
+                        alert("🐾 ¡Tu mascota está por llegar! Faltan 5 minutos para terminar el paseo.")
                         localStorage.setItem(key, 'true')
                         setReturningNotified(true)
-
-                        // Optional: Insert into notifications table
                     }
                 }
             }

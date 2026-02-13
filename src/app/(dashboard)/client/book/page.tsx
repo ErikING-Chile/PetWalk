@@ -18,7 +18,7 @@ export default function BookingPage() {
     const [selectedPet, setSelectedPet] = useState("")
     const [date, setDate] = useState("")
     const [time, setTime] = useState("")
-    const [duration, setDuration] = useState(30)
+    const [duration, setDuration] = useState(60)
     const [selectedWalker, setSelectedWalker] = useState("")
     const [isProcessing, setIsProcessing] = useState(false)
 
@@ -38,7 +38,7 @@ export default function BookingPage() {
     const handleNext = () => setStep(s => s + 1)
     const handleBack = () => setStep(s => s - 1)
 
-    const price = duration === 30 ? 5000 : duration === 60 ? 9000 : 15000
+    const price = duration === 60 ? 9000 : duration === 90 ? 13500 : 18000
 
     const handleConfirmBooking = async () => {
         if (!defaultPayment) {
@@ -168,7 +168,7 @@ export default function BookingPage() {
                         <div className="space-y-2">
                             <label className="text-sm text-gray-300">Duración</label>
                             <div className="flex gap-2">
-                                {[30, 60, 90].map(d => (
+                                {[60, 90, 120].map(d => (
                                     <button
                                         key={d}
                                         type="button"

@@ -71,7 +71,11 @@ export async function rejectBooking(bookingId: string) {
     )
 
     const { error } = await adminSupabase.from('walk_bookings')
-        .update({ status: 'rejected' })
+        .update({
+            status: 'cancelled',
+            notes: 'Rechazado por walker',
+            cancelled_by: 'walker'
+        })
         .eq('id', bookingId)
 
     if (error) {

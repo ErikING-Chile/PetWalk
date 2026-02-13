@@ -72,9 +72,7 @@ export async function rejectBooking(bookingId: string) {
 
     const { error } = await adminSupabase.from('walk_bookings')
         .update({
-            status: 'cancelled',
-            notes: 'Rechazado por walker',
-            cancelled_by: 'walker'
+            status: 'cancelled'
         })
         .eq('id', bookingId)
 
@@ -104,11 +102,11 @@ export async function cancelWalkByWalker(bookingId: string, reason: string) {
     // but if we used admin for reject, maybe we need it here?
     // If status is 'assigned', walker_id is set to this user. So standard client works.
 
+    console.log(`Cancelling walk ${bookingId}. Reason: ${reason}`)
+
     const { error } = await supabase.from('walk_bookings')
         .update({
-            status: 'cancelled',
-            notes: `Cancelado por walker: ${reason}`,
-            cancelled_by: 'walker'
+            status: 'cancelled'
         })
         .eq('id', bookingId)
         .eq('status', 'assigned') // Only allow cancelling assigned walks for now via this specific flow?

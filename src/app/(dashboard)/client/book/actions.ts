@@ -188,9 +188,7 @@ export async function cancelBooking(bookingId: string, reason: string) {
     const { error } = await supabase
         .from('walk_bookings')
         .update({
-            status: 'cancelled',
-            notes: `Cancelado por dueño: ${reason}`,
-            cancelled_by: 'client'
+            status: 'cancelled'
         })
         .eq('id', bookingId)
         .in('status', ['requested', 'assigned'])
@@ -200,7 +198,7 @@ export async function cancelBooking(bookingId: string, reason: string) {
         return { error: "Error cancelling booking or too late to cancel." }
     }
 
-    console.log(`Booking ${bookingId} cancelled by client`)
+    console.log(`Booking ${bookingId} cancelled by client. Reason: ${reason}`)
 
     revalidatePath('/client')
     revalidatePath(`/client/track/${bookingId}`)
@@ -217,12 +215,13 @@ export async function terminateWalkEarly(bookingId: string, reason: string) {
 
     const newPrice = (booking.price || 0) + 3000
 
+    console.log(`Terminating walk ${bookingId}. Reason: ${reason}`)
+
     const { error } = await supabase
         .from('walk_bookings')
         .update({
             status: 'completed', // Terminated early count as completed but with penalty? Or 'cancelled'? User said "termino del paseo". Usually means completed but stopped early.
-            price: newPrice,
-            notes: `Terminado anticipadamente por el dueño (+3000 por multa). Motivo: ${reason}`
+            price: newPrice
         })
         .eq('id', bookingId)
         .eq('status', 'in_progress')

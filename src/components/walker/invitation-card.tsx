@@ -70,8 +70,13 @@ export function WalkerInvitationCard({ booking }: { booking: Booking }) {
 
     const handleWalkerCancel = async () => {
         if (!cancelReason.trim()) return
-        await cancelWalkByWalker(booking.id, cancelReason)
-        setIsCancelModalOpen(false)
+        const result = await cancelWalkByWalker(booking.id, cancelReason)
+        if (result?.error) {
+            alert("Error al cancelar: " + result.error)
+        } else {
+            setIsCancelModalOpen(false)
+            setCancelReason("") // Reset reason
+        }
     }
 
     return (

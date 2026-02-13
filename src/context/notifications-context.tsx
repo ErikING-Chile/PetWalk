@@ -119,8 +119,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
                         table: 'walk_bookings',
                     },
                     (payload) => {
+                        console.log('🔔 UPDATE Payload:', payload) // Debug
                         const newBooking = payload.new as any
                         const oldBooking = payload.old as any
+
+                        router.refresh() // REFRESH DATA ON UPDATE
 
                         if (newBooking.client_id === user.id || newBooking.walker_id === user.id) {
                             if (newBooking.status !== oldBooking.status) {
@@ -148,6 +151,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
                                 // PROMINENT NOTIFICATION LOGIC
                                 // 1. Owner: When Walker Accepts (status assigned)
                                 if (newBooking.client_id === user.id && newBooking.status === 'assigned') {
+                                    console.log('🔔 Triggering Owner Prominent Notification')
                                     setProminentNotification({
                                         isOpen: true,
                                         title: '¡Paseo Asignado!',
@@ -169,7 +173,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
                         table: 'walk_bookings',
                     },
                     (payload) => {
+                        console.log('🔔 INSERT Payload:', payload) // Debug
                         const newBooking = payload.new as any
+
+                        router.refresh() // REFRESH DATA ON INSERT
+
                         // 2. Walker: New Request (status requested) - EXAGGERATED
                         // Note: In a real app we'd filter by location/availability here or server-side.
                         // For now we rely on the client-side check if this walker sees it? 
@@ -185,6 +193,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
                         // Let's keep it simple: if you are NOT the creator, it's a request for you (conceptually).
 
                         if (newBooking.walker_id === user.id && newBooking.status === 'requested') {
+                            console.log('🔔 Triggering Walker Prominent Notification')
                             // Direct request to specific walker
                             setProminentNotification({
                                 isOpen: true,
